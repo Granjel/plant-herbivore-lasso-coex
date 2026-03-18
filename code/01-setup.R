@@ -4,7 +4,9 @@
 
 library(tidyverse) # for data manipulation and visualisation
 library(glinternet) # for lasso regression with interactions
-
+library(doSNOW) # for parallel processing with foreach and glinternet
+library(foreach) # for parallel processing with doSNOW and glinternet
+library(beepr) # for sound notification when done
 
 # create main directories ------------------------------------------------
 
