@@ -45,5 +45,10 @@ docs/
 # translation temp files
 po/*~
 
-# RStudio Connect folder
-rsconnect/
+# ignore certain types of files
+*.RData
+*.png
+*.jpg
+*.jpeg
+*.html
+*.pdf
