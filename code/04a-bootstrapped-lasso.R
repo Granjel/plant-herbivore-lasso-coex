@@ -6,7 +6,7 @@
 source("code/02-lasso-parameters.R")
 
 # times to resample (number of bootstraps)
-t_boot <- 1
+t_boot <- 25
 
 # nest the data per species
 df <- data %>%
@@ -37,12 +37,12 @@ bootstraps <- df %>%
 # setup parallel computation ---------------------------------------------
 
 # setup the cluster
-n_cores <- parallel::detectCores(logical = TRUE) - 2 # leave 2 cores free
+n_cores <- parallel::detectCores(logical = TRUE) # - 2 # leave 2 cores free
 cl <- makeCluster(n_cores)
 registerDoSNOW(cl)
 
 # assign a distinct random stream to each core for perfect reproducibility
-parallel::clusterSetRNGStream(cl, iseed = 1610)
+parallel::clusterSetRNGStream(cl, iseed = 16010)
 
 # setup the progress bar
 total_tasks <- nrow(bootstraps)
@@ -98,4 +98,15 @@ bootstraps$gli_models <- lasso_results
 save(
   bootstraps,
   file = "data/processed/bootstrapped/bootstrapped-lasso-models.RData"
+)
+
+# send telegram message when done
+source("code/telegram-bot.R")
+send_telegram(
+  paste0(
+    t_boot,
+    " bootstrapped LASSO completed in ",
+    round(as.numeric(end - start, units = "mins"), 2),
+    " minutes."
+  )
 )
