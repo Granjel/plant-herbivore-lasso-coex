@@ -5,6 +5,11 @@
 # libraries, data, etc.
 source("code/01-setup.R")
 
+# create directory for empirical results if it doesn't exist
+if (!dir.exists("data/processed/empirical")) {
+  dir.create("data/processed/empirical")
+}
+
 # define columns for plants and grasshoppers
 start_col_plants <- 8
 end_col_plants <- 43 # plants start in col 8 and end in col 43
