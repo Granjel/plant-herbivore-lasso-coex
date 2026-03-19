@@ -136,7 +136,7 @@ bootstraps$delete <- bootstraps_balanced$delete
 rm(bootstraps_balanced, true_counts)
 
 # delete those rows with delete == TRUE
-bootstraps <- bootstraps[-which(bootstraps$delete == TRUE), ]
+bootstraps <- bootstraps %>% filter(delete == FALSE)
 
 # info
 cat(
@@ -156,7 +156,7 @@ bootstraps <- bootstraps %>%
   ungroup()
 
 # new tibble to save all interaction matrices
-boot_data <- bootstraps %>%
+boot_coefs <- bootstraps %>%
   group_by(boot_id) %>%
   summarise(
     Focal = list(Focal),
@@ -169,6 +169,6 @@ boot_data <- bootstraps %>%
 # clean up and save
 rm(bootstraps)
 save(
-  boot_data,
+  boot_coefs,
   file = "data/processed/bootstrapped/bootstrapped-coefficients.RData"
 )

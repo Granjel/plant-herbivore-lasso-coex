@@ -6,7 +6,7 @@
 source("code/02-lasso-parameters.R")
 
 # times to resample (number of bootstraps)
-t_boot <- 500
+t_boot <- 1
 
 # nest the data per species
 df <- data %>%
@@ -20,6 +20,9 @@ resample_the_data <- function(i, dat) {
   new_dat <- dat[sample(1:n_row, n_row, replace = TRUE), ]
   return(new_dat)
 }
+
+# set seed for reproducible resampling
+set.seed(1610)
 
 # resample the data within species
 bootstraps <- df %>%
@@ -67,7 +70,7 @@ lasso_results <- foreach(
 
     # The function runs and returns the model to the list
     glinternet.cv(
-      X = dat_i[, species_subset],
+      X = dat_i[, c(species, grasshoppers)],
       Y = dat_i$Cover,
       numLevels = rep(1, n_col),
       nLambda = max_lambda
