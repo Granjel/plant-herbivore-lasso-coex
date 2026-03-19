@@ -56,4 +56,4 @@ print(end - start)
 beep(1)
 
 # save a .RData file with results after computation, not to run it every time
-save(gli_models, file = "data/processed/empirical-lasso-models.RData")
+save(gli_models, file = "data/processed/empirical/empirical-lasso-models.RData")
