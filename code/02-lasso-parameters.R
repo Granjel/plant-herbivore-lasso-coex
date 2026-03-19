@@ -10,6 +10,11 @@ if (!dir.exists("data/processed/empirical")) {
   dir.create("data/processed/empirical")
 }
 
+# create directory for bootstrapped results if it doesn't exist
+if (!dir.exists("data/processed/bootstrapped")) {
+  dir.create("data/processed/bootstrapped")
+}
+
 # define columns for plants and grasshoppers
 start_col_plants <- 8
 end_col_plants <- 43 # plants start in col 8 and end in col 43
