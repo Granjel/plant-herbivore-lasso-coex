@@ -13,8 +13,10 @@ if (full_run) {
   # run empirical models
   source("code/02a-empirical-lasso.R")
   source("code/02b-empirical-extract-coefs.R")
+  source("code/02c-empirical-build-matrices.R")
 
   # run bootstrapped models
   source("code/03a-bootstrapped-lasso.R")
   source("code/03b-bootstrapped-extract-coefs.R")
+  source("code/03c-bootstrapped-build-matrices.R")
 }
