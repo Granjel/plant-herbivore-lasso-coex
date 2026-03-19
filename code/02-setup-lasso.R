@@ -1,4 +1,4 @@
-# setup for the empirical models
+# set up specific for lasso (both empirical data and bootstraps)
 
 # general setup ----------------------------------------------------------
 
