@@ -83,7 +83,7 @@ end <- Sys.time()
 print(end - start)
 
 # sound notification when done
-beep(1)
+beepr::beep(1)
 
 
 # save results -----------------------------------------------------------
