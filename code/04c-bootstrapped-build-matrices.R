@@ -16,37 +16,39 @@ plant_pos <- 1:length(species)
 grasshopper_pos <- (length(species) + 1):n_col
 
 # define new columns for matrices
-boot_data$alpha <- lapply(1:nrow(boot_data), function(x) list())
-boot_data$gamma <- lapply(1:nrow(boot_data), function(x) list())
-boot_data$beta_pp <- lapply(1:nrow(boot_data), function(x) list())
-boot_data$beta_gp <- lapply(1:nrow(boot_data), function(x) list())
+boot_coefs$alpha <- lapply(1:nrow(boot_coefs), function(x) list())
+boot_coefs$gamma <- lapply(1:nrow(boot_coefs), function(x) list())
+boot_coefs$beta_pp <- lapply(1:nrow(boot_coefs), function(x) list())
+boot_coefs$beta_gp <- lapply(1:nrow(boot_coefs), function(x) list())
 
 
 # build alpha (community matrix) and gamma (herbivory matrix) ------------
 
 # loop to build the matrices for each bootstrap
-for (b in 1:nrow(boot_data)) {
+for (b in 1:nrow(boot_coefs)) {
   # object to save both together first
   alpha_gamma <- matrix(0, length(species), n_col)
 
   # create a matrix for plant-plant + grasshopper-plant together
   for (i in 1:length(species)) {
-    for (j in 1:nrow(boot_data$fixed[[b]][[i]])) {
-      alpha_gamma[i, boot_data$fixed[[b]][[i]]$pos[j]] <- boot_data$fixed[[b]][[
+    for (j in 1:nrow(boot_coefs$fixed[[b]][[i]])) {
+      alpha_gamma[i, boot_coefs$fixed[[b]][[i]]$pos[j]] <- boot_coefs$fixed[[
+        b
+      ]][[
         i
       ]]$coef[j]
     }
   }
 
   # separate alpha (plant-plant pairwise interaction matrix)
-  boot_data$alpha[[b]] <- alpha_gamma[, plant_pos]
-  colnames(boot_data$alpha[[b]]) <- species
-  rownames(boot_data$alpha[[b]]) <- species
+  boot_coefs$alpha[[b]] <- alpha_gamma[, plant_pos]
+  colnames(boot_coefs$alpha[[b]]) <- species
+  rownames(boot_coefs$alpha[[b]]) <- species
 
   # separate gamma (grasshopper-plant pairwise interaction matrix)
-  boot_data$gamma[[b]] <- alpha_gamma[, grasshopper_pos]
-  colnames(boot_data$gamma[[b]]) <- grasshoppers
-  rownames(boot_data$gamma[[b]]) <- species
+  boot_coefs$gamma[[b]] <- alpha_gamma[, grasshopper_pos]
+  colnames(boot_coefs$gamma[[b]]) <- grasshoppers
+  rownames(boot_coefs$gamma[[b]]) <- species
 
   # build beta (HOIs) matrices -------------------------------------------
 
@@ -55,13 +57,13 @@ for (b in 1:nrow(boot_data)) {
   inter_gp <- list() #grasshoppers on plant-plant
 
   # loop to separate the HOIs
-  for (i in 1:length(boot_data$inter[[b]])) {
-    if (nrow(boot_data$inter[[b]][[i]]) > 0) {
+  for (i in 1:length(boot_coefs$inter[[b]])) {
+    if (nrow(boot_coefs$inter[[b]][[i]]) > 0) {
       # plants on plant-plant
-      inter_pp[[i]] <- boot_data$inter[[b]][[i]] %>%
+      inter_pp[[i]] <- boot_coefs$inter[[b]][[i]] %>%
         filter((spp1 %in% plant_pos) & (spp2 %in% plant_pos))
       # grasshoppers on plant-plant
-      inter_gp[[i]] <- boot_data$inter[[b]][[i]] %>%
+      inter_gp[[i]] <- boot_coefs$inter[[b]][[i]] %>%
         filter((spp2 %in% grasshopper_pos) & (!spp1 %in% grasshopper_pos))
     } else {
       inter_pp[[i]] <- tibble()
@@ -86,7 +88,7 @@ for (b in 1:nrow(boot_data)) {
   ) #grasshoppers on plant-plant
 
   # loop to fill the matrices
-  for (i in 1:length(boot_data$inter[[b]])) {
+  for (i in 1:length(boot_coefs$inter[[b]])) {
     # beta_pp
     for (j in 1:nrow(inter_pp[[i]])) {
       if (nrow(inter_pp[[i]]) > 0) {
@@ -124,23 +126,23 @@ for (b in 1:nrow(boot_data)) {
   }
 
   # assign final beta matrices to the dataframe
-  boot_data$beta_pp[[b]] <- beta_pp
-  boot_data$beta_gp[[b]] <- beta_gp
+  boot_coefs$beta_pp[[b]] <- beta_pp
+  boot_coefs$beta_gp[[b]] <- beta_gp
 
   # add plant names to the intrisic growth rate vector -------------------
 
-  names(boot_data$igr[[b]]) <- species
+  names(boot_coefs$igr[[b]]) <- species
 } # end b loop
 
 
 # clean up and save ------------------------------------------------------
 
 # leave only what's of interest
-boot_matrices <- boot_data %>%
+boot_matrices <- boot_coefs %>%
   dplyr::select(-Focal, -fixed, -inter)
 
 # clean environment
-rm(boot_data, alpha_gamma, beta_pp, beta_gp, inter_pp, inter_gp, i, j, b)
+rm(boot_coefs, alpha_gamma, beta_pp, beta_gp, inter_pp, inter_gp, i, j, b)
 
 # save matrices
 save(

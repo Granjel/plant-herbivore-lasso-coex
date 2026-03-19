@@ -42,7 +42,8 @@ if (isTRUE(length(which(lambdas >= 50)) != 0)) {
   cat("MESSAGE: All good with the lambdas used!\n")
 }
 
-# save lambdas
+# save lambdas to know which ones were used for the coefficients extraction
+# no further use of this object, but good to have it saved for reproducibility
 save(lambdas, file = "data/processed/empirical/empirical-lambdas.RData")
 
 
@@ -84,5 +85,5 @@ save(
   igr,
   fixed,
   inter,
-  file = "data/processed/empirical/empirical-coefficients-unproccessed.RData"
+  file = "data/processed/empirical/empirical-coefficients.RData"
 )

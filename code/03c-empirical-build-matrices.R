@@ -6,7 +6,7 @@
 source("code/02-lasso-parameters.R")
 
 # load lasso results
-load("data/processed/empirical/empirical-coefficients-unproccessed.RData")
+load("data/processed/empirical/empirical-coefficients.RData")
 
 # info
 cat("Building interaction matrices with the empirical coefficients...\n")
