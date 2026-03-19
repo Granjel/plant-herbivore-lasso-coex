@@ -10,13 +10,21 @@ source("code/01-setup.R")
 
 # computationally heavy; run only if full_run is TRUE
 if (full_run) {
-  # run empirical models
+  # empirical interaction coefficients with LV and lasso regularisation
   source("code/02a-empirical-lasso.R")
+
+  # extract empirical coefficients from glinternet and build matrices
   source("code/02b-empirical-extract-coefs.R")
+
+  # build the matrices for the empirical data
   source("code/02c-empirical-build-matrices.R")
 
-  # run bootstrapped models
+  # bootstrapped interaction coefficients with LV and lasso regularisation
   source("code/03a-bootstrapped-lasso.R")
+
+  # extract bootstrapped coefficients from glinternet and build matrices
   source("code/03b-bootstrapped-extract-coefs.R")
+
+  # build the matrices for the bootstrapped data
   source("code/03c-bootstrapped-build-matrices.R")
 }
