@@ -2,8 +2,8 @@
 
 # setup and parallel computation -----------------------------------------
 
-# load general setup and empirical setup
-source("code/02-empirical-models.R")
+# load lasso parameters
+source("code/02-lasso-parameters.R")
 
 # setup the cluster
 n_cores <- parallel::detectCores(logical = TRUE) - 2 # leave 2 cores free

@@ -2,8 +2,8 @@
 
 # setup ------------------------------------------------------------------
 
-# load general setup and empirical setup
-source("code/02-empirical-models.R")
+# load lasso parameters
+source("code/02-lasso-parameters.R")
 
 # load lasso results
 load("data/processed/empirical/empirical-coefficients-unproccessed.RData")

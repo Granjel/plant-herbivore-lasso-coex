@@ -1,6 +1,6 @@
 # bootstrapped interaction coefficients with LV and lasso regularisation
 
-# load setup -------------------------------------------------------------
+# setup and parallel computation -----------------------------------------
 
-# libraries, data, etc.
-source("code/01-setup.R")
+# load lasso parameters
+source("code/02-lasso-parameters.R")
