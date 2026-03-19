@@ -22,7 +22,7 @@ opts <- list(progress = progress)
 # run lasso regularisation models ----------------------------------------
 
 # info and timer start
-cat("Running LASSO in parallel on", n_cores, "cores...\n")
+cat("Running empirical LASSO in parallel on", n_cores, "cores...\n")
 start <- Sys.time()
 
 # parallel loop
