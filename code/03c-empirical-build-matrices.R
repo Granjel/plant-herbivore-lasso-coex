@@ -1,4 +1,4 @@
-# build the matrices for the empirical data
+# build interaction matrices from empirical coefficients
 
 # setup ------------------------------------------------------------------
 
@@ -9,7 +9,7 @@ source("code/02-lasso-parameters.R")
 load("data/processed/empirical/empirical-coefficients-unproccessed.RData")
 
 # info
-cat("Building the interacion matrices with the empirical coefficients...\n")
+cat("Building interaction matrices with the empirical coefficients...\n")
 
 
 # build alpha (community matrix) and gamma (herbivory matrix) ------------
@@ -42,8 +42,8 @@ rownames(gamma) <- species
 # build beta (HOIs) matrices ---------------------------------------------
 
 # lists to save the different HOIs
-inter_pp <- list() #plants on plant-plant
-inter_gp <- list() #grasshoppers on plant-plant
+inter_pp <- list() # plants on plant-plant
+inter_gp <- list() # grasshoppers on plant-plant
 
 # loop to separate the HOIs
 for (i in 1:length(inter)) {
@@ -58,7 +58,7 @@ for (i in 1:length(inter)) {
     inter_pp[[i]] <- tibble()
     inter_gp[[i]] <- tibble()
   }
-} #end i
+}
 
 # lists to build the actual matrices
 beta_pp <- lapply(
@@ -67,14 +67,15 @@ beta_pp <- lapply(
   data = 0,
   nrow = length(species),
   ncol = length(species)
-) #plants on plant-plant
+) # plants on plant-plant
+
 beta_gp <- lapply(
   1:length(grasshoppers),
   matrix,
   data = 0,
   nrow = length(species),
   ncol = length(species)
-) #grasshoppers on plant-plant
+) # grasshoppers on plant-plant
 
 # loop to fill the matrices
 for (i in 1:length(inter)) {
@@ -117,20 +118,25 @@ for (i in 1:length(beta_gp)) {
 
 # add plant names to the intrisic growth rate vector ---------------------
 
-# name igr
 names(igr) <- species
 
 
 # save all matrices together ---------------------------------------------
 
+# clean environment
+rm(alpha_gamma, inter_pp, inter_gp, i, j)
+
 # as an .RData file
 save(
-  igr, # r, or intrinsic growth rates of plants
-  alpha, # alpha, or plant-plant pairwise interaction matrix
-  gamma, # gamma, or grasshopper-plant pairwise interaction matrix
-  beta_pp, # beta_pp, or plant-plant-plant HOIs matrix
-  beta_gp, # beta_gp, or grasshopper-plant-plant HOIs matrix
-  species, # keep plant species names
-  grasshoppers, # keep grasshopper species names
+  igr,
+  alpha,
+  gamma,
+  beta_pp,
+  beta_gp,
+  species,
+  grasshoppers,
   file = "data/processed/empirical/empirical-matrices.RData"
 )
+
+# info
+cat("Empirical matrices successfully built and saved!\n")
