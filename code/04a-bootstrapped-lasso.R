@@ -6,7 +6,7 @@
 source("code/02-lasso-parameters.R")
 
 # times to resample (number of bootstraps)
-t_boot <- 10
+t_boot <- 100
 
 # nest the data per species
 df <- data %>%
