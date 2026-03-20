@@ -15,31 +15,47 @@ number_of_rows <- nrow(bootstraps)
 bootstraps$igr <- NA
 bootstraps$lambda <- NA
 bootstraps$delete <- FALSE
-bootstraps$fixed <- lapply(1:number_of_rows, function(x) list())
-bootstraps$inter <- lapply(1:number_of_rows, function(x) list())
+bootstraps$fixed <- lapply(
+  1:number_of_rows,
+  function(x) tibble(pos = numeric(), coef = numeric())
+)
+bootstraps$inter <- lapply(
+  1:number_of_rows,
+  function(x) tibble(spp1 = numeric(), spp2 = numeric(), coef = numeric())
+)
 
 # extract coefficients ---------------------------------------------------
 
 # info
 cat("Extracting coefficients...\n")
 
-# loop to save such parameters
+# loop to extract parameters and map to absolute positions
 for (i in 1:number_of_rows) {
+  # load model info
+  model_info <- bootstraps$gli_models[[i]]
+
+  # handle extinct focal species
+  if (model_info$status == "extinct") {
+    bootstraps$igr[i] <- 0
+    next
+  }
+
+  # extract fit and index map
+  fit <- model_info$fit
+  index_map <- model_info$index_map
+
   # save the intrinsic growth rate
-  bootstraps$igr[i] <- bootstraps$gli_models[[i]]$betahat[[1]][1]
+  bootstraps$igr[i] <- fit$betahat[[1]][1]
 
   # select lambda
-  k <- which(species == bootstraps$Focal[i]) # identify species
-  n_i <- which(
-    bootstraps$gli_models[[i]]$lambdaHat == bootstraps$gli_models[[i]]$lambda
-  ) # min error lambda
+  k_orig <- which(species == bootstraps$Focal[i])
+  k_shrunken <- which(index_map == k_orig)
+
+  n_i <- which(fit$lambdaHat == fit$lambda)
 
   for (j in n_i:max_lambda) {
     # from min error lambda until the intraspecific coefficient is found
-    if (
-      k %in%
-        coef(bootstraps$gli_models[[i]]$glinternetFit)[[j]]$mainEffects$cont
-    ) {
+    if (k_shrunken %in% coef(fit$glinternetFit)[[j]]$mainEffects$cont) {
       break # stop j when the desired lambda is found
     }
   } # end j
@@ -48,21 +64,16 @@ for (i in 1:number_of_rows) {
   bootstraps$lambda[i] <- j
 
   # identify those that didn't report an intraspecific value
-  if (
-    !k %in%
-      coef(bootstraps$gli_models[[i]]$glinternetFit)[[j]]$mainEffects$cont
-  ) {
+  if (!k_shrunken %in% coef(fit$glinternetFit)[[j]]$mainEffects$cont) {
     bootstraps$delete[i] <- TRUE
   }
 
   # extract corresponding coefficients
-  coefs <- coef(bootstraps$gli_models[[i]]$glinternetFit)[[bootstraps$lambda[
-    i
-  ]]]
+  coefs <- coef(fit$glinternetFit)[[j]]
 
-  # save fixed effects
+  # save fixed effects using the index map for absolute positioning
   bootstraps$fixed[[i]] <- tibble(
-    pos = coefs$mainEffects$cont,
+    pos = index_map[coefs$mainEffects$cont],
     coef = unlist(coefs$mainEffectsCoef$cont)
   )
 
@@ -73,10 +84,10 @@ for (i in 1:number_of_rows) {
     ]
   }
 
-  # save HOIs
+  # save HOIs using the index map for absolute positioning
   bootstraps$inter[[i]] <- tibble(
-    spp1 = coefs$interactions$contcont[, 1],
-    spp2 = coefs$interactions$contcont[, 2],
+    spp1 = index_map[coefs$interactions$contcont[, 1]],
+    spp2 = index_map[coefs$interactions$contcont[, 2]],
     coef = unlist(coefs$interactionsCoef$contcont)
   )
 }
@@ -148,12 +159,13 @@ cat(
 
 # structure for matrix building ------------------------------------------
 
-# assign a row number within species to group by later
+# assign a row number within species, then order identically to the 'species' vector
 bootstraps <- bootstraps %>%
-  arrange(Focal) %>%
   group_by(Focal) %>%
   mutate(boot_id = row_number()) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Focal = factor(Focal, levels = species)) %>%
+  arrange(boot_id, Focal)
 
 # new tibble to save all interaction matrices
 boot_coefs <- bootstraps %>%

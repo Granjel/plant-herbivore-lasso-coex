@@ -31,12 +31,14 @@ for (b in 1:nrow(boot_coefs)) {
 
   # create a matrix for plant-plant + grasshopper-plant together
   for (i in 1:length(species)) {
-    for (j in 1:nrow(boot_coefs$fixed[[b]][[i]])) {
-      alpha_gamma[i, boot_coefs$fixed[[b]][[i]]$pos[j]] <- boot_coefs$fixed[[
-        b
-      ]][[
-        i
-      ]]$coef[j]
+    if (nrow(boot_coefs$fixed[[b]][[i]]) > 0) {
+      for (j in 1:nrow(boot_coefs$fixed[[b]][[i]])) {
+        alpha_gamma[i, boot_coefs$fixed[[b]][[i]]$pos[j]] <- boot_coefs$fixed[[
+          b
+        ]][[
+          i
+        ]]$coef[j]
+      }
     }
   }
 
@@ -90,8 +92,8 @@ for (b in 1:nrow(boot_coefs)) {
   # loop to fill the matrices
   for (i in 1:length(boot_coefs$inter[[b]])) {
     # beta_pp
-    for (j in 1:nrow(inter_pp[[i]])) {
-      if (nrow(inter_pp[[i]]) > 0) {
+    if (nrow(inter_pp[[i]]) > 0) {
+      for (j in 1:nrow(inter_pp[[i]])) {
         beta_pp[[inter_pp[[i]]$spp1[j]]][i, inter_pp[[i]]$spp2[j]] <- inter_pp[[
           i
         ]]$coef[j] /
@@ -103,8 +105,8 @@ for (b in 1:nrow(boot_coefs)) {
       }
     }
     # beta_gp
-    for (j in 1:nrow(inter_gp[[i]])) {
-      if (nrow(inter_gp[[i]]) > 0) {
+    if (nrow(inter_gp[[i]]) > 0) {
+      for (j in 1:nrow(inter_gp[[i]])) {
         beta_gp[[(inter_gp[[i]]$spp2[j] - length(species))]][
           i,
           inter_gp[[i]]$spp1[j]

@@ -19,8 +19,10 @@ alpha_gamma <- matrix(0, length(species), n_col)
 
 # create a matrix for plant-plant + grasshopper-plant together
 for (i in 1:length(species)) {
-  for (j in 1:nrow(fixed[[i]])) {
-    alpha_gamma[i, fixed[[i]]$pos[j]] <- fixed[[i]]$coef[j]
+  if (nrow(fixed[[i]]) > 0) {
+    for (j in 1:nrow(fixed[[i]])) {
+      alpha_gamma[i, fixed[[i]]$pos[j]] <- fixed[[i]]$coef[j]
+    }
   }
 }
 
@@ -80,8 +82,8 @@ beta_gp <- lapply(
 # loop to fill the matrices
 for (i in 1:length(inter)) {
   # beta_pp
-  for (j in 1:nrow(inter_pp[[i]])) {
-    if (nrow(inter_pp[[i]]) > 0) {
+  if (nrow(inter_pp[[i]]) > 0) {
+    for (j in 1:nrow(inter_pp[[i]])) {
       beta_pp[[inter_pp[[i]]$spp1[j]]][i, inter_pp[[i]]$spp2[j]] <- inter_pp[[
         i
       ]]$coef[j] /
@@ -93,8 +95,8 @@ for (i in 1:length(inter)) {
     }
   }
   # beta_gp
-  for (j in 1:nrow(inter_gp[[i]])) {
-    if (nrow(inter_gp[[i]]) > 0) {
+  if (nrow(inter_gp[[i]]) > 0) {
+    for (j in 1:nrow(inter_gp[[i]])) {
       beta_gp[[(inter_gp[[i]]$spp2[j] - length(species))]][
         i,
         inter_gp[[i]]$spp1[j]

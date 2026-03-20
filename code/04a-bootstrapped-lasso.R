@@ -6,7 +6,7 @@
 source("code/02-lasso-parameters.R")
 
 # times to resample (number of bootstraps)
-t_boot <- 25
+t_boot <- 1
 
 # nest the data per species
 df <- data %>%
@@ -65,16 +65,33 @@ lasso_results <- foreach(
   .options.snow = opts
 ) %dopar%
   {
-    # Extract the specific resampled dataframe for this iteration
+    # extract the specific resampled dataframe for this iteration
     dat_i <- bootstraps$resampled_data[[i]]
 
-    # The function runs and returns the model to the list
-    glinternet.cv(
-      X = dat_i[, c(species, grasshoppers)],
+    # check for ecological extinction of the focal species
+    if (sum(dat_i$Cover) == 0) {
+      return(list(status = "extinct"))
+    }
+
+    # identify present neighbours to avoid zero-variance columns
+    X_full <- dat_i[, c(species, grasshoppers)]
+    present_cols <- colSums(X_full) > 0
+    X_present <- X_full[, present_cols]
+
+    # run the model on the surviving community
+    fit <- glinternet.cv(
+      X = X_present,
       Y = dat_i$Cover,
-      numLevels = rep(1, n_col),
+      numLevels = rep(1, ncol(X_present)),
       nLambda = max_lambda
     )
+
+    # return model and index map for proper coefficient placement
+    return(list(
+      status = "success",
+      fit = fit,
+      index_map = which(present_cols)
+    ))
   }
 
 # stop the cluster and close the progress bar
@@ -101,7 +118,7 @@ save(
 )
 
 # send telegram message when done
-source("code/telegram-bot.R")
+source("telegram-bot.R")
 send_telegram(
   paste0(
     t_boot,
