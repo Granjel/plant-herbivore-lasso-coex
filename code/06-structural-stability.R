@@ -118,7 +118,7 @@ structural_coex <- function(alpha, intrinsic, n) {
 # computation ------------------------------------------------------------
 
 # define module size (change between 3 and 4)
-richness <- 4
+richness <- 3
 
 # info
 cat("Computing structural metrics for", richness, "species modules...\n")
