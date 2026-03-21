@@ -2,9 +2,6 @@
 
 # setup ------------------------------------------------------------------
 
-library(tidyverse)
-library(patchwork) # Swapped ggpubr for patchwork for cleaner assembly
-
 # load empirical and bootstrapped matrices
 load("data/processed/empirical/empirical-matrices.RData")
 load("data/processed/bootstrapped/bootstrapped-matrices.RData")
@@ -107,14 +104,14 @@ get_r2_ci <- function(df_all, x_col, y_col) {
 
 # plotting limits setup --------------------------------------------------
 
-# panel A Y-axis limit
+# panel a y-axis limit
 lims_a_y <- quantile(
   igr_gamma_for_plotting$grasshoppers,
   c(perc / 2, 1 - (perc / 2)),
   na.rm = TRUE
 )
 
-# shared Panel A & B limits
+# shared panel a & b limits
 lims_b <- c(
   min(
     quantile(igr_gamma_for_plotting$igr, perc / 2, na.rm = TRUE),
@@ -126,14 +123,14 @@ lims_b <- c(
   )
 )
 
-# panel C Y-axis limit
+# panel c y-axis limit
 lims_c_y <- quantile(
   alpha_beta_for_plotting$beta_coefficients,
   c(perc / 2, 1 - (perc / 2)),
   na.rm = TRUE
 )
 
-# shared Panel C & D limits
+# shared panel c & d limits
 lims_d <- c(
   min(
     quantile(
@@ -294,7 +291,7 @@ plot_d <- ggplot(
 
 # final assembly using patchwork -----------------------------------------
 
-# The patchwork formula automatically handles layout and alignment
+# patchwork formula to automatically handle layout and alignment
 arranged_all <- (plot_a | plot_c) /
   (plot_b | plot_d) +
   plot_annotation(tag_levels = 'a') &
