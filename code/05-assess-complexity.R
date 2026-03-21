@@ -3,7 +3,7 @@
 # setup ------------------------------------------------------------------
 
 library(tidyverse)
-library(ggpubr)
+library(patchwork) # Swapped ggpubr for patchwork for cleaner assembly
 
 # load empirical and bootstrapped matrices
 load("data/processed/empirical/empirical-matrices.RData")
@@ -14,59 +14,19 @@ perc <- 0.01
 color_smooth <- c("darkgreen", "deepskyblue4")[1]
 transparency <- 0.15
 
-# abbreviations (ensure this matches your 'species' vector order)
-species_abbrev <- c(
-  "Am",
-  "Ao",
-  "Ae",
-  "Be",
-  "Cj",
-  "Ca",
-  "Cr",
-  "Dg",
-  "Dc",
-  "Er",
-  "Em",
-  "Fa",
-  "Fr",
-  "Gv",
-  "Gd",
-  "Gr",
-  "Lv",
-  "Lp",
-  "Lc",
-  "Ma",
-  "Or",
-  "Pe",
-  "Ph",
-  "Pl",
-  "Pa",
-  "Pp",
-  "Pt",
-  "Ra",
-  "Rx",
-  "Sp",
-  "So",
-  "To",
-  "Tf",
-  "Tp",
-  "Vo",
-  "Vp"
-)
 
 # data preparation: igr and gamma ----------------------------------------
 
-# 1. extract empirical igr and gamma
+# extract empirical igr and gamma
 emp_igr_gamma <- tibble(
   spp_code = species,
-  spp = species_abbrev,
   bootstrapped = FALSE,
   boot_id = 0,
   igr = igr,
   grasshoppers = rowSums(gamma)
 )
 
-# 2. extract bootstrapped igr and gamma
+# extract bootstrapped igr and gamma
 boot_igr_gamma <- boot_matrices %>%
   select(boot_id, igr, gamma) %>%
   mutate(
@@ -77,20 +37,14 @@ boot_igr_gamma <- boot_matrices %>%
   unnest(c(spp_code, igr, grasshoppers)) %>%
   mutate(bootstrapped = TRUE)
 
-# 3. combine for scatter plot (panel a & b)
-igr_gamma_for_plotting <- bind_rows(
-  emp_igr_gamma %>% select(-spp),
-  boot_igr_gamma
-)
-
-# create the net variable for panel b
-igr_gamma_for_plotting <- igr_gamma_for_plotting %>%
+# combine for scatter plot (panel a & b)
+igr_gamma_for_plotting <- bind_rows(emp_igr_gamma, boot_igr_gamma) %>%
   mutate(net_igr = igr + grasshoppers)
 
 
 # data preparation: alpha and beta ---------------------------------------
 
-# 1. extract empirical alpha and beta
+# extract empirical alpha and beta
 emp_alpha_beta <- tibble(
   bootstrapped = FALSE,
   boot_id = 0,
@@ -99,7 +53,7 @@ emp_alpha_beta <- tibble(
     as.vector(Reduce("+", beta_pp))
 )
 
-# 2. extract bootstrapped alpha and beta
+# extract bootstrapped alpha and beta
 boot_alpha_beta <- boot_matrices %>%
   mutate(
     alpha_coefficients = map(alpha, as.vector),
@@ -113,7 +67,7 @@ boot_alpha_beta <- boot_matrices %>%
   unnest(c(alpha_coefficients, beta_coefficients)) %>%
   mutate(bootstrapped = TRUE)
 
-# 3. combine for panels c and d
+# combine for panels c and d
 alpha_beta_for_plotting <- bind_rows(emp_alpha_beta, boot_alpha_beta) %>%
   mutate(changed = alpha_coefficients + beta_coefficients)
 
@@ -126,7 +80,6 @@ get_r2_ci <- function(df_all, x_col, y_col) {
   emp_df <- df_all %>% filter(bootstrapped == FALSE)
   formula_obj <- as.formula(paste(y_col, "~", x_col))
   m_emp <- lm(formula_obj, data = emp_df)
-  # Updated to 3 decimal places
   emp_r2 <- round(summary(m_emp)$r.squared, 3)
 
   # bootstrap models
@@ -142,7 +95,6 @@ get_r2_ci <- function(df_all, x_col, y_col) {
   # calculate quantiles
   if (length(unique(boot_r2s)) > 1) {
     ci <- quantile(boot_r2s, c(0.025, 0.975), na.rm = TRUE)
-    # Updated to 3 decimal places
     ci_lab <- paste0("[", round(ci[1], 3), ", ", round(ci[2], 3), "]")
   } else {
     ci_lab <- "[NA, NA]"
@@ -155,45 +107,49 @@ get_r2_ci <- function(df_all, x_col, y_col) {
 
 # plotting limits setup --------------------------------------------------
 
-# Panel A Y-axis limit
+# panel A Y-axis limit
 lims_a_y <- quantile(
   igr_gamma_for_plotting$grasshoppers,
   c(perc / 2, 1 - (perc / 2)),
   na.rm = TRUE
 )
 
-# Shared Panel A & B X-axis / Y-axis limits (forces vertical alignment)
+# shared Panel A & B limits
 lims_b <- c(
   min(
-    quantile(igr_gamma_for_plotting$igr, perc / 2, na.rm = T),
-    quantile(igr_gamma_for_plotting$net_igr, perc / 2, na.rm = T)
+    quantile(igr_gamma_for_plotting$igr, perc / 2, na.rm = TRUE),
+    quantile(igr_gamma_for_plotting$net_igr, perc / 2, na.rm = TRUE)
   ),
   max(
-    quantile(igr_gamma_for_plotting$igr, 1 - perc / 2, na.rm = T),
-    quantile(igr_gamma_for_plotting$net_igr, 1 - perc / 2, na.rm = T)
+    quantile(igr_gamma_for_plotting$igr, 1 - perc / 2, na.rm = TRUE),
+    quantile(igr_gamma_for_plotting$net_igr, 1 - perc / 2, na.rm = TRUE)
   )
 )
 
-# Panel C Y-axis limit
+# panel C Y-axis limit
 lims_c_y <- quantile(
   alpha_beta_for_plotting$beta_coefficients,
   c(perc / 2, 1 - (perc / 2)),
   na.rm = TRUE
 )
 
-# Shared Panel C & D X-axis / Y-axis limits (forces vertical alignment)
+# shared Panel C & D limits
 lims_d <- c(
   min(
-    quantile(alpha_beta_for_plotting$alpha_coefficients, perc / 2, na.rm = T),
-    quantile(alpha_beta_for_plotting$changed, perc / 2, na.rm = T)
+    quantile(
+      alpha_beta_for_plotting$alpha_coefficients,
+      perc / 2,
+      na.rm = TRUE
+    ),
+    quantile(alpha_beta_for_plotting$changed, perc / 2, na.rm = TRUE)
   ),
   max(
     quantile(
       alpha_beta_for_plotting$alpha_coefficients,
       1 - perc / 2,
-      na.rm = T
+      na.rm = TRUE
     ),
-    quantile(alpha_beta_for_plotting$changed, 1 - perc / 2, na.rm = T)
+    quantile(alpha_beta_for_plotting$changed, 1 - perc / 2, na.rm = TRUE)
   )
 )
 
@@ -202,14 +158,13 @@ lims_d <- c(
 
 # panel a: igr vs gamma
 stats_a <- get_r2_ci(igr_gamma_for_plotting, "igr", "grasshoppers")
-
-plot_r_gamma <- ggplot(
+plot_a <- ggplot(
   data = igr_gamma_for_plotting %>% filter(bootstrapped == TRUE),
   aes(x = igr, y = grasshoppers)
 ) +
   geom_point(alpha = transparency, color = "grey") +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  scale_x_continuous(limits = lims_b) + # NOW SHARES LIMITS WITH PANEL B
+  scale_x_continuous(limits = lims_b) +
   scale_y_continuous(limits = lims_a_y) +
   geom_point(
     data = igr_gamma_for_plotting %>% filter(bootstrapped == FALSE),
@@ -229,15 +184,13 @@ plot_r_gamma <- ggplot(
   ylab(expression(atop("Direct herbivory", "effects (" * gamma * ")"))) +
   theme_classic() +
   theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5), # CENTERED TITLE
+    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
     axis.title.x = element_text(color = NA)
   )
 
-
-# panel b: net effect on growth (igr vs igr + gamma)
+# panel b: net effect on growth
 stats_b <- get_r2_ci(igr_gamma_for_plotting, "igr", "net_igr")
-
-plot_r_changed <- ggplot(
+plot_b <- ggplot(
   data = igr_gamma_for_plotting %>% filter(bootstrapped == TRUE),
   aes(x = igr, y = net_igr)
 ) +
@@ -265,10 +218,7 @@ plot_r_changed <- ggplot(
     "with herbivory (r + " * gamma * ")"
   ))) +
   theme_classic() +
-  theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5) # CENTERED TITLE
-  )
-
+  theme(plot.title = element_text(size = 11, face = "plain", hjust = 0.5))
 
 # panel c: alpha vs beta
 stats_c <- get_r2_ci(
@@ -276,15 +226,14 @@ stats_c <- get_r2_ci(
   "alpha_coefficients",
   "beta_coefficients"
 )
-
-plot_alpha_beta <- ggplot(
+plot_c <- ggplot(
   data = alpha_beta_for_plotting %>% filter(bootstrapped == TRUE),
   aes(x = alpha_coefficients, y = beta_coefficients)
 ) +
   geom_point(alpha = transparency, color = "grey") +
   geom_hline(yintercept = 0, linetype = "dotted") +
   geom_vline(xintercept = 0, linetype = "dotted") +
-  scale_x_continuous(limits = lims_d) + # NOW SHARES LIMITS WITH PANEL D
+  scale_x_continuous(limits = lims_d) +
   scale_y_continuous(limits = lims_c_y) +
   geom_point(
     data = alpha_beta_for_plotting %>% filter(bootstrapped == FALSE),
@@ -304,15 +253,13 @@ plot_alpha_beta <- ggplot(
   ylab(expression(atop("Higher-order interactions", "(HOIs; " * beta * ")"))) +
   theme_classic() +
   theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5), # CENTERED TITLE
+    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
     axis.title.x = element_text(color = NA)
   )
 
-
-# panel d: alpha vs changed (alpha + beta)
+# panel d: alpha vs changed
 stats_d <- get_r2_ci(alpha_beta_for_plotting, "alpha_coefficients", "changed")
-
-plot_alpha_changed <- ggplot(
+plot_d <- ggplot(
   data = alpha_beta_for_plotting %>% filter(bootstrapped == TRUE),
   aes(x = alpha_coefficients, y = changed)
 ) +
@@ -342,34 +289,21 @@ plot_alpha_changed <- ggplot(
     "with HOIs (" * alpha + beta * ")"
   ))) +
   theme_classic() +
-  theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5) # CENTERED TITLE
-  )
+  theme(plot.title = element_text(size = 11, face = "plain", hjust = 0.5))
 
 
-# final assembly ---------------------------------------------------------
+# final assembly using patchwork -----------------------------------------
 
-# arrange everything into the final figure
-arranged_all <- ggpubr::ggarrange(
-  plot_r_gamma,
-  NULL,
-  plot_alpha_beta,
-  plot_r_changed,
-  NULL,
-  plot_alpha_changed,
-  ncol = 3,
-  nrow = 2,
-  align = "hv",
-  widths = c(1, 0.15, 1),
-  labels = c("a", "", "c", "b", "", "d"),
-  hjust = -0.75,
-  font.label = list(size = 14, face = "bold")
-)
+# The patchwork formula automatically handles layout and alignment
+arranged_all <- (plot_a | plot_c) /
+  (plot_b | plot_d) +
+  plot_annotation(tag_levels = 'a') &
+  theme(plot.tag = element_text(size = 14, face = "bold"))
 
 # save the arranged plot
 ggsave(
-  arranged_all,
-  file = "results/figures/fig-3.jpeg",
+  "results/figures/fig-3.jpeg",
+  plot = arranged_all,
   device = "jpeg",
   dpi = 320,
   height = 6.25,
