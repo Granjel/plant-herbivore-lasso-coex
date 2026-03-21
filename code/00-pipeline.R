@@ -28,3 +28,9 @@ if (full_run) {
   # build the matrices for the bootstrapped data
   source("code/04c-bootstrapped-build-matrices.R")
 }
+
+# visual panels with linear regressions to assess the role of herbivory and HOIs
+source("code/05-assess-complexity.R")
+
+# run structural stability analyses on the empirical data
+source("code/06-structural-stability.R")
