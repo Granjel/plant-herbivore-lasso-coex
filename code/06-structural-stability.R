@@ -118,9 +118,12 @@ structural_coex <- function(alpha, intrinsic, n) {
 # computation ------------------------------------------------------------
 
 # define module size (change between 3 and 4)
-richness <- 3
+richness <- 4
 
-cat("Computing structural metrics for", richness, "-species modules...\n")
+# info
+cat("Computing structural metrics for", richness, "species modules...\n")
+
+# compute structural metrics for all combinations of species modules
 res <- structural_coex(alpha = as.matrix(alpha), intrinsic = igr, n = richness)
 
 # clean up results
@@ -137,6 +140,8 @@ str_coex <- data.frame(
   "kurtosis" = res$kurtosis,
   "pnd" = res$pnd
 )
+
+# remove rows with NA values (in case of empty interaction matrices)
 rownames(str_coex) <- NULL
 str_coex <- str_coex[complete.cases(str_coex), ]
 
@@ -146,7 +151,11 @@ str_coex <- str_coex[complete.cases(str_coex), ]
 # save data to results/tables/
 write.table(
   str_coex,
-  file = paste0("results/tables/str-coex-modules-", richness, "-species.txt"),
+  file = paste0(
+    "data/processed/empirical/str-coex-modules-",
+    richness,
+    "-species.txt"
+  ),
   sep = "\t",
   row.names = FALSE
 )
