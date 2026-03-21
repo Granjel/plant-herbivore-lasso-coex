@@ -8,6 +8,9 @@ library(doSNOW) # for parallel processing with foreach and glinternet
 library(foreach) # for parallel processing with doSNOW and glinternet
 library(beepr) # for sound notification when done
 library(patchwork) # for arranging ggplots
+library(mvtnorm) # for multivariate normal distribution in str stab analysis
+library(MASS) # for various statistical functions
+library(EnvStats) # for environmental statistics
 
 
 # create main directories ------------------------------------------------

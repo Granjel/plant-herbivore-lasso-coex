@@ -2,6 +2,9 @@
 
 # setup ------------------------------------------------------------------
 
+# load setup
+source("code/01-setup.R")
+
 # load empirical and bootstrapped matrices
 load("data/processed/empirical/empirical-matrices.RData")
 load("data/processed/bootstrapped/bootstrapped-matrices.RData")
