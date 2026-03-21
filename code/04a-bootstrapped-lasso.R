@@ -116,14 +116,3 @@ save(
   bootstraps,
   file = "data/processed/bootstrapped/bootstrapped-lasso-models.RData"
 )
-
-# send telegram message when done
-source("telegram-bot.R")
-send_telegram(
-  paste0(
-    t_boot,
-    " bootstrapped LASSO completed in ",
-    round(as.numeric(end - start, units = "mins"), 2),
-    " minutes."
-  )
-)
