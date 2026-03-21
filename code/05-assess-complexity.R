@@ -1,4 +1,4 @@
-# plot empirical and bootstrapped interactions (figure 3)
+# visual panels with linear regressions to assess the role of herbivory and HOIs
 
 # setup ------------------------------------------------------------------
 
@@ -28,12 +28,12 @@ emp_igr_gamma <- tibble(
 
 # extract bootstrapped igr and gamma
 boot_igr_gamma <- boot_matrices %>%
-  select(boot_id, igr, gamma) %>%
+  dplyr::select(boot_id, igr, gamma) %>%
   mutate(
     spp_code = list(species),
     grasshoppers = map(gamma, rowSums)
   ) %>%
-  select(-gamma) %>%
+  dplyr::select(-gamma) %>%
   unnest(c(spp_code, igr, grasshoppers)) %>%
   mutate(bootstrapped = TRUE)
 
@@ -63,7 +63,7 @@ boot_alpha_beta <- boot_matrices %>%
       ~ as.vector(Reduce("+", .x)) + as.vector(Reduce("+", .y))
     )
   ) %>%
-  select(boot_id, alpha_coefficients, beta_coefficients) %>%
+  dplyr::select(boot_id, alpha_coefficients, beta_coefficients) %>%
   unnest(c(alpha_coefficients, beta_coefficients)) %>%
   mutate(bootstrapped = TRUE)
 
@@ -302,7 +302,7 @@ arranged_all <- (plot_a | plot_c) /
 
 # save the arranged plot
 ggsave(
-  "results/figures/fig-3.jpeg",
+  "results/figures/complexity.jpeg",
   plot = arranged_all,
   device = "jpeg",
   dpi = 320,
