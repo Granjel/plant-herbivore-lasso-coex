@@ -53,4 +53,5 @@ po/*~
 *.html
 *.pdf
 
-telegram-bot.R
+# ignore the whole processed data folder
+data/processed/
