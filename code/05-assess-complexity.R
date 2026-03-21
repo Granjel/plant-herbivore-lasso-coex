@@ -302,7 +302,7 @@ arranged_all <- (plot_a | plot_c) /
 
 # save the arranged plot
 ggsave(
-  "results/figures/complexity.jpeg",
+  "results/figures/fig-complexity.jpeg",
   plot = arranged_all,
   device = "jpeg",
   dpi = 320,
