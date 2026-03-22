@@ -64,12 +64,12 @@ emp_igr_gamma <- tibble(
 
 # extract bootstrapped igr and gamma
 boot_igr_gamma <- boot_matrices %>%
-  select(boot_id, igr, gamma) %>%
+  dplyr::select(boot_id, igr, gamma) %>%
   mutate(
     spp_code = list(species),
     grasshoppers = map(gamma, rowSums)
   ) %>%
-  select(-gamma) %>%
+  dplyr::select(-gamma) %>%
   unnest(c(spp_code, igr, grasshoppers))
 
 # calculate 95% CIs and format for forest plot
@@ -84,7 +84,7 @@ igr_forest_data <- boot_igr_gamma %>%
   ) %>%
   left_join(
     emp_igr_gamma %>%
-      select(spp_code, spp, emp_igr = igr, emp_g = grasshoppers),
+      dplyr::select(spp_code, spp, emp_igr = igr, emp_g = grasshoppers),
     by = "spp_code"
   ) %>%
   uncount(2, .id = "condition") %>%
