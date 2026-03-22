@@ -113,9 +113,12 @@ plot_sfd_hex <- function(df, legend_text) {
     geom_hex(bins = 50) +
     scale_fill_gradient(
       low = "grey90",
-      high = "black",
+      high = "darkgreen",
       name = legend_text,
-      guide = guide_colorbar(barwidth = unit(5, "cm")) # prevents text overlap
+      guide = guide_colorbar(
+        barwidth = unit(3, "cm"), # prevents text overlap
+        barheight = unit(0.25, "cm") # <-- Makes the gradient rectangle slimmer!
+      )
     ) +
     labs(
       x = "Structural fitness differences (SFD)",
@@ -129,10 +132,10 @@ plot_sfd_hex <- function(df, legend_text) {
 }
 
 # create the individual plots
-plot_3_sp <- plot_sfd_hex(res_3, "3-spp. modules\n(count)") +
+plot_3_sp <- plot_sfd_hex(res_3, "3-species modules (count)") +
   theme(axis.title.x = element_blank()) # hide x-axis title for the top plot
 
-plot_4_sp <- plot_sfd_hex(res_4, "4-spp. modules\n(count)")
+plot_4_sp <- plot_sfd_hex(res_4, "4-species modules (count)")
 
 # combine them vertically and make tags bold
 final_combined_plot <- (plot_3_sp / plot_4_sp) +
