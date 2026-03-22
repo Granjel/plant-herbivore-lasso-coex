@@ -11,6 +11,7 @@ library(patchwork) # for arranging ggplots
 library(mvtnorm) # for multivariate normal distribution in str stab analysis
 library(MASS) # for various statistical functions
 library(EnvStats) # for environmental statistics
+library(broom) # for tidying model outputs
 
 
 # create main directories ------------------------------------------------
