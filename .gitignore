@@ -55,3 +55,10 @@ po/*~
 
 # ignore the whole processed data folder
 data/processed/
+
+# and the whole results folder
+results/
+
+# and all supplementary materials
+suppl-mat/suppl-figures/
+suppl-mat/suppl-tables/
