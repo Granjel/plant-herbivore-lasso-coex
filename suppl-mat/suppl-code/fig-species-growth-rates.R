@@ -76,10 +76,10 @@ boot_igr_gamma <- boot_matrices %>%
 igr_forest_data <- boot_igr_gamma %>%
   group_by(spp_code) %>%
   summarise(
-    igr_low = quantile(igr, 0.025),
-    igr_high = quantile(igr, 0.975),
-    igr_gamma_low = quantile(igr + grasshoppers, 0.025),
-    igr_gamma_high = quantile(igr + grasshoppers, 0.975),
+    igr_low = quantile(igr, 0.005),
+    igr_high = quantile(igr, 0.995),
+    igr_gamma_low = quantile(igr + grasshoppers, 0.005),
+    igr_gamma_high = quantile(igr + grasshoppers, 0.995),
     .groups = "drop"
   ) %>%
   left_join(
@@ -136,7 +136,7 @@ plot_forest <- ggplot(
     )
   ) +
   scale_y_discrete(labels = function(x) parse(text = parse_labels[x])) +
-  xlab("Value") +
+  xlab("Value [99% CI]") +
   ylab("Plant species") +
   theme_classic() +
   theme(
