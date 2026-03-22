@@ -5,9 +5,6 @@
 
 # load setup
 source("code/01-setup.R")
-library(igraph)
-library(cowplot)
-library(magick)
 
 # load empirical matrices
 load("data/processed/empirical/empirical-matrices.RData")
