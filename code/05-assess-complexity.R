@@ -94,7 +94,7 @@ get_r2_ci <- function(df_all, x_col, y_col) {
 
   # calculate quantiles
   if (length(unique(boot_r2s)) > 1) {
-    ci <- quantile(boot_r2s, c(0.025, 0.975), na.rm = TRUE)
+    ci <- quantile(boot_r2s, c(0.005, 0.995), na.rm = TRUE)
     ci_lab <- paste0("[", round(ci[1], 3), ", ", round(ci[2], 3), "]")
   } else {
     ci_lab <- "[NA, NA]"
