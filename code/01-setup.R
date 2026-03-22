@@ -12,6 +12,7 @@ library(mvtnorm) # for multivariate normal distribution in str stab analysis
 library(MASS) # for various statistical functions
 library(EnvStats) # for environmental statistics
 library(broom) # for tidying model outputs
+library(igraph) # for network analysis and visualization
 
 
 # create main directories ------------------------------------------------
