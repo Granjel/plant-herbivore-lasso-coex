@@ -13,6 +13,8 @@ library(MASS) # for various statistical functions
 library(EnvStats) # for environmental statistics
 library(broom) # for tidying model outputs
 library(igraph) # for network analysis and visualization
+library(cowplot) # for arranging ggplots and saving figures
+library(magick) # for image manipulation and saving figures
 
 
 # create main directories ------------------------------------------------
