@@ -16,7 +16,6 @@ library(igraph) # for network analysis and visualization
 library(cowplot) # for arranging ggplots and saving figures
 library(magick) # for image manipulation and saving figures
 
-
 # create main directories ------------------------------------------------
 
 # for processed or intermediate data
