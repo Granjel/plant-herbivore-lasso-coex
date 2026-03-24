@@ -1,19 +1,20 @@
 # evaluate relationships between network metrics and structural outputs
-# combined 3- and 4-species glms with side-by-side patchwork mapping
 
 # setup ------------------------------------------------------------------
 
 # load setup and libraries
 source("code/01-setup.R")
-library(broom)
-library(patchwork)
-library(dplyr)
-library(stringr)
-library(ggplot2)
 
 # define module sizes to process
 richness_levels <- c(3, 4)
 
+# define metric labels for plotting
+metric_labels <- c(
+  "iid" = "IID",
+  "pnd" = "PND",
+  "skewness" = "Skewness",
+  "kurtosis" = "Kurtosis"
+)
 
 # processing function ----------------------------------------------------
 
@@ -70,6 +71,7 @@ intercept_table <- all_results %>%
   filter(term == "(Intercept)") %>%
   dplyr::select(module_size, response, estimate, ci_low, ci_high)
 
+# export the intercepts to a table for reporting
 write.table(
   intercept_table,
   file = "results/tables/table-glm-all-additive-intercepts.txt",
@@ -83,22 +85,26 @@ plot_data <- all_results %>%
   filter(term != "(Intercept)") %>%
   mutate(
     term = factor(term, levels = rev(c("iid", "pnd", "skewness", "kurtosis"))),
+    # Ensure proper ordering so 3 species dodges "above" 4 species visually
     module_size = factor(module_size, levels = c("4 species", "3 species"))
   )
 
 
 # plotting ---------------------------------------------------------------
 
-# update factors so 3 species remains on top of 4 species visually
-plot_data <- plot_data %>%
-  mutate(
-    module_size = factor(module_size, levels = c("4 species", "3 species"))
+# define the base theme explicitly so it never fails
+base_theme <- theme_classic() +
+  theme(
+    axis.text = element_text(color = "black", size = 10),
+    axis.title = element_text(color = "black", size = 10),
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", size = 12)
   )
 
 # panel a: snd plot
 plot_snd <- ggplot(
   plot_data %>% filter(response == "SND"),
-  aes(x = estimate, y = term, fill = module_size)
+  aes(x = estimate, y = term, fill = module_size, group = module_size)
 ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
   geom_pointrange(
@@ -110,46 +116,8 @@ plot_snd <- ggplot(
     position = position_dodge(width = 0.4)
   ) +
   scale_y_discrete(labels = metric_labels) +
-  # flip: white for 3 species, solid color for 4 species
   scale_fill_manual(
     values = c("3 species" = "white", "4 species" = "#be3872"),
-    breaks = c("3 species", "4 species")
-  ) +
-  guides(
-    fill = guide_legend(
-      title = "Module size",
-      override.aes = list(
-        shape = 21,
-        color = "black",
-        fill = c("white", "black"), # hollow for 3sp, solid for 4sp
-        stroke = 0.8
-      )
-    )
-  ) +
-  labs(
-    x = "Effect on structural niche differences\n(SND [99% CI])",
-    y = NULL
-  ) +
-  base_theme
-
-# panel b: sfd plot
-plot_sfd <- ggplot(
-  plot_data %>% filter(response == "SFD"),
-  aes(x = estimate, y = term, fill = module_size)
-) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
-  geom_pointrange(
-    aes(xmin = ci_low, xmax = ci_high),
-    shape = 21,
-    color = "#208f8a",
-    size = 0.55,
-    stroke = 0.8,
-    position = position_dodge(width = 0.4)
-  ) +
-  scale_y_discrete(labels = metric_labels) +
-  # flip: white for 3 species, solid color for 4 species
-  scale_fill_manual(
-    values = c("3 species" = "white", "4 species" = "#208f8a"),
     breaks = c("3 species", "4 species")
   ) +
   guides(
@@ -163,6 +131,32 @@ plot_sfd <- ggplot(
       )
     )
   ) +
+  labs(
+    x = "Effect on structural niche differences\n(SND [99% CI])",
+    y = NULL
+  ) +
+  base_theme
+
+# panel b: sfd plot
+plot_sfd <- ggplot(
+  plot_data %>% filter(response == "SFD"),
+  aes(x = estimate, y = term, fill = module_size, group = module_size)
+) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_pointrange(
+    aes(xmin = ci_low, xmax = ci_high),
+    shape = 21,
+    color = "#208f8a",
+    size = 0.55,
+    stroke = 0.8,
+    position = position_dodge(width = 0.4)
+  ) +
+  scale_y_discrete(labels = metric_labels) +
+  scale_fill_manual(
+    values = c("3 species" = "white", "4 species" = "#208f8a"),
+    breaks = c("3 species", "4 species")
+  ) +
+  guides(fill = "none") +
   labs(
     x = "Effect on structural fitness differences\n(SFD [99% CI])",
     y = NULL
@@ -192,11 +186,12 @@ ggsave(
   filename = "results/figures/fig-glm-all-additive-effects.jpeg",
   plot = plot_combined,
   device = "jpeg",
-  dpi = 320,
+  dpi = dpi,
   height = 4,
   width = 6.5
 )
 
+# info
 cat(
-  "done! intercepts saved and combined plot saved with a single unified legend.\n"
+  "Done!\n"
 )
