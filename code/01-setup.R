@@ -44,6 +44,9 @@ if (!dir.exists("suppl-mat")) {
 # overall theme for figures
 theme_set(theme_bw(base_size = 14))
 
+# dpi for saving figures
+dpi <- 640
+
 
 # empirical data ---------------------------------------------------------
 
