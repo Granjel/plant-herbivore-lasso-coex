@@ -34,3 +34,6 @@ source("code/05-assess-complexity.R")
 
 # run structural stability analyses on the empirical data
 source("code/06-structural-stability.R")
+
+# evaluate relationships between network metrics and structural outputs
+source("code/07-module-metrics.R")
