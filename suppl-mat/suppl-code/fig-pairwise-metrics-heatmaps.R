@@ -226,7 +226,7 @@ ggsave(
   ),
   plot = arranged_snd_pairs,
   device = "jpeg",
-  dpi = 640,
+  dpi = dpi,
   height = 10,
   width = 10,
   bg = "white"

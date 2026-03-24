@@ -150,7 +150,7 @@ ggsave(
   filename = "suppl-mat/suppl-figures/fig-sfd-herbivory.jpeg",
   plot = final_combined_plot,
   device = "jpeg",
-  dpi = 640,
+  dpi = dpi,
   height = 7.75,
   width = 4
 )

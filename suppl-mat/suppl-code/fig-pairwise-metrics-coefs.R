@@ -190,7 +190,7 @@ ggsave(
   filename = "suppl-mat/suppl-figures/fig-pairwise-metrics-coefs.jpeg",
   plot = plot_combined,
   device = "jpeg",
-  dpi = 400,
+  dpi = dpi,
   height = 9,
   width = 8,
   bg = "white"

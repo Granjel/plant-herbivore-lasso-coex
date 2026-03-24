@@ -150,7 +150,7 @@ ggsave(
   plot_forest,
   file = "suppl-mat/suppl-figures/fig-species-growth-rates.jpeg",
   device = "jpeg",
-  dpi = 320,
+  dpi = dpi,
   height = 7.0,
   width = 5.5
 )

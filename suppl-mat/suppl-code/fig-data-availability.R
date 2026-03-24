@@ -136,7 +136,7 @@ ggsave(
   device = "jpeg",
   width = 8,
   height = 11,
-  dpi = 400,
+  dpi = dpi,
   bg = "white"
 )
 

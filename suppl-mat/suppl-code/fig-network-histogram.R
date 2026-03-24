@@ -363,7 +363,7 @@ ggsave(
   filename = "suppl-mat/suppl-figures/fig-networks-histograms.jpeg",
   plot = final_figure,
   device = "jpeg",
-  dpi = 640,
+  dpi = dpi,
   width = 16,
   height = 16,
   bg = "white"

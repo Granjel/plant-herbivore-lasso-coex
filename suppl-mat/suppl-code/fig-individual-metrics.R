@@ -198,7 +198,7 @@ ggsave(
   filename = "suppl-mat/suppl-figures/fig-individual-metrics.jpeg",
   plot = plot_final,
   device = "jpeg",
-  dpi = 320,
+  dpi = dpi,
   height = 7,
   width = 6.25
 )
