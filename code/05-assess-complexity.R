@@ -305,7 +305,7 @@ ggsave(
   "results/figures/fig-complexity.jpeg",
   plot = arranged_all,
   device = "jpeg",
-  dpi = 320,
+  dpi = dpi,
   height = 6.25,
   width = 7.25
 )
