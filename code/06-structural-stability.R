@@ -11,6 +11,9 @@ load("data/processed/empirical/empirical-matrices.RData")
 # ensure igr is a named vector to match alpha's rownames for subsetting
 names(igr) <- rownames(alpha)
 
+# define module size (change between 3 and 4)
+richness <- 3
+
 
 # structural coexistence functions ---------------------------------------
 
@@ -116,9 +119,6 @@ structural_coex <- function(alpha, intrinsic, n) {
 
 
 # computation ------------------------------------------------------------
-
-# define module size (change between 3 and 4)
-richness <- 3
 
 # info
 cat("Computing structural metrics for", richness, "species modules...\n")
