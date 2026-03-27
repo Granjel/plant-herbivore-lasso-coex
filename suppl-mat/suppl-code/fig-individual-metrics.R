@@ -7,10 +7,10 @@ source("code/01-setup.R")
 
 # define richness levels and metrics to analyse
 richness_levels <- c(3, 4)
-metrics <- c("iid", "pnd", "skewness", "kurtosis")
+metrics <- c("iib", "pnb", "skewness", "kurtosis")
 metric_labels <- c(
-  "iid" = "IID",
-  "pnd" = "PND",
+  "iib" = "IIB",
+  "pnb" = "PNB",
   "skewness" = "Skewness",
   "kurtosis" = "Kurtosis"
 )
@@ -138,8 +138,8 @@ make_mini_plot <- function(
       } else {
         element_blank()
       },
-      axis.line.y = if (show_y) element_line() else element_blank(),
-      axis.ticks.y = if (show_y) element_line() else element_blank(),
+      axis.line.y = element_line(),
+      axis.ticks.y = element_line(),
       axis.text.x = element_text(size = 8),
       axis.title.x = if (show_x) {
         element_text(size = 10, face = "plain")
