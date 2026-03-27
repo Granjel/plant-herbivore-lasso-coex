@@ -57,7 +57,7 @@ test_feasibility <- function(alpha, r) {
 # intra- and interspecific values, and positive-negative difference
 intra <- function(A) sum(diag(A)) / nrow(A)
 inter <- function(A) (sum(A) - sum(diag(A))) / (nrow(A) * (nrow(A) - 1))
-pnd <- function(A) sum(A)
+pnb <- function(A) sum(A)
 
 # compute structural metrics wrapper
 structural_coex <- function(alpha, intrinsic, n) {
@@ -70,10 +70,10 @@ structural_coex <- function(alpha, intrinsic, n) {
     "feasibility",
     "intra",
     "inter",
-    "iid",
+    "iib",
     "skewness",
     "kurtosis",
-    "pnd"
+    "pnb"
   )
 
   for (i in 1:nrow(combos)) {
@@ -98,7 +98,7 @@ structural_coex <- function(alpha, intrinsic, n) {
       )
       results_combos$intra[i] <- tryCatch(intra(alpha2), error = function(e) NA)
       results_combos$inter[i] <- tryCatch(inter(alpha2), error = function(e) NA)
-      results_combos$iid[i] <- tryCatch(
+      results_combos$iib[i] <- tryCatch(
         intra(alpha2) - inter(alpha2),
         error = function(e) NA
       )
@@ -110,7 +110,7 @@ structural_coex <- function(alpha, intrinsic, n) {
         kurtosis(as.numeric(alpha2)),
         error = function(e) NA
       )
-      results_combos$pnd[i] <- tryCatch(pnd(alpha2), error = function(e) NA)
+      results_combos$pnb[i] <- tryCatch(pnb(alpha2), error = function(e) NA)
     }
   }
   results_combos$combos <- rownames(results_combos)
@@ -135,10 +135,10 @@ str_coex <- data.frame(
   "feasibility" = res$feasibility,
   "intra" = res$intra,
   "inter" = res$inter,
-  "iid" = res$iid,
+  "iib" = res$iib,
   "skewness" = res$skewness,
   "kurtosis" = res$kurtosis,
-  "pnd" = res$pnd
+  "pnb" = res$pnb
 )
 
 # remove rows with NA values (in case of empty interaction matrices)

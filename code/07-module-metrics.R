@@ -10,8 +10,8 @@ richness_levels <- c(3, 4)
 
 # define metric labels for plotting
 metric_labels <- c(
-  "iid" = "IID",
-  "pnd" = "PND",
+  "iib" = "IIB",
+  "pnb" = "PNB",
   "skewness" = "Skewness",
   "kurtosis" = "Kurtosis"
 )
@@ -34,15 +34,15 @@ process_modules <- function(richness) {
   # standardize predictors
   str_coex_scaled <- str_coex %>%
     mutate(
-      iid = as.numeric(scale(iid)),
-      pnd = as.numeric(scale(pnd)),
+      iib = as.numeric(scale(iib)),
+      pnb = as.numeric(scale(pnb)),
       skewness = as.numeric(scale(skewness)),
       kurtosis = as.numeric(scale(kurtosis))
     )
 
   # run glms
-  m_snd <- glm(SND ~ iid + pnd + skewness + kurtosis, data = str_coex_scaled)
-  m_sfd <- glm(SFD ~ iid + pnd + skewness + kurtosis, data = str_coex_scaled)
+  m_snd <- glm(SND ~ iib + pnb + skewness + kurtosis, data = str_coex_scaled)
+  m_sfd <- glm(SFD ~ iib + pnb + skewness + kurtosis, data = str_coex_scaled)
 
   # extract cis and tag with richness
   bind_rows(
@@ -84,7 +84,7 @@ write.table(
 plot_data <- all_results %>%
   filter(term != "(Intercept)") %>%
   mutate(
-    term = factor(term, levels = rev(c("iid", "pnd", "skewness", "kurtosis"))),
+    term = factor(term, levels = rev(c("iib", "pnb", "skewness", "kurtosis"))),
     # Ensure proper ordering so 3 species dodges "above" 4 species visually
     module_size = factor(module_size, levels = c("4 species", "3 species"))
   )
