@@ -10,19 +10,19 @@ richness_levels <- c(3, 4)
 
 # define labels
 metric_labels <- c(
-  "iid" = "IID",
-  "pnd" = "PND",
+  "iib" = "IIB",
+  "pnb" = "PNB",
   "skewness" = "Skewness",
   "kurtosis" = "Kurtosis"
 )
 
 # define pairwise combinations
 pair_list <- list(
-  list(vars = c("iid", "pnd"), name = "IID & PND"),
-  list(vars = c("iid", "skewness"), name = "IID & Skewness"),
-  list(vars = c("iid", "kurtosis"), name = "IID & Kurtosis"),
-  list(vars = c("pnd", "skewness"), name = "PND & Skewness"),
-  list(vars = c("pnd", "kurtosis"), name = "PND & Kurtosis"),
+  list(vars = c("iib", "pnb"), name = "IIB & PNB"),
+  list(vars = c("iib", "skewness"), name = "IIB & Skewness"),
+  list(vars = c("iib", "kurtosis"), name = "IIB & Kurtosis"),
+  list(vars = c("pnb", "skewness"), name = "PNB & Skewness"),
+  list(vars = c("pnb", "kurtosis"), name = "PNB & Kurtosis"),
   list(vars = c("skewness", "kurtosis"), name = "Skewness & Kurtosis")
 )
 
@@ -44,8 +44,8 @@ process_pairwise <- function(richness) {
   # standardize predictors
   str_coex_scaled <- str_coex %>%
     mutate(
-      iid = as.numeric(scale(iid)),
-      pnd = as.numeric(scale(pnd)),
+      iib = as.numeric(scale(iib)),
+      pnb = as.numeric(scale(pnb)),
       skewness = as.numeric(scale(skewness)),
       kurtosis = as.numeric(scale(kurtosis))
     )
@@ -90,7 +90,7 @@ all_results <- bind_rows(lapply(richness_levels, process_pairwise))
 # prep factors for the plot
 plot_data <- all_results %>%
   mutate(
-    term = factor(term, levels = rev(c("iid", "pnd", "skewness", "kurtosis"))),
+    term = factor(term, levels = rev(c("iib", "pnb", "skewness", "kurtosis"))),
     module_size = factor(module_size, levels = c("4 species", "3 species")),
     model_pair = factor(model_pair, levels = sapply(pair_list, `[[`, "name"))
   )
@@ -98,15 +98,27 @@ plot_data <- all_results %>%
 
 # plotting ---------------------------------------------------------------
 
-# shared base theme
-base_theme <- theme_bw() +
+# shared base theme with updated aesthetics
+base_theme <- theme_classic() +
   theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
+    # text to black
+    text = element_text(color = "black"),
+
+    # draw only bottom and left axes
+    axis.line = element_line(color = "black", linewidth = 0.6),
+    axis.ticks = element_line(color = "black", linewidth = 0.6),
+
+    # strip settings (removes facet titles and backgrounds)
     strip.background = element_blank(),
     strip.text = element_blank(),
-    axis.text.y = element_text(size = 11, face = "bold"),
-    axis.title.x = element_text(size = 12)
+
+    # text formatting
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(color = "black", size = 11),
+    axis.title.x = element_text(color = "black", size = 12),
+
+    # add vertical space between panels so the inner axes don't overlap
+    panel.spacing = unit(1.2, "lines")
   )
 
 # panel a: snd plot
@@ -127,7 +139,13 @@ plot_snd <- ggplot(
   scale_fill_manual(
     values = c("3 species" = "white", "4 species" = "#be3872")
   ) +
-  facet_wrap(~model_pair, ncol = 1, scales = "free_y") +
+  facet_wrap(
+    ~model_pair,
+    ncol = 1,
+    scales = "free_y",
+    axes = "all",
+    axis.labels = "all"
+  ) +
   guides(
     fill = guide_legend(
       title = "Module size",
@@ -161,14 +179,22 @@ plot_sfd <- ggplot(
   scale_fill_manual(
     values = c("3 species" = "white", "4 species" = "#208f8a")
   ) +
-  facet_wrap(~model_pair, ncol = 1, scales = "free_y") +
+  facet_wrap(
+    ~model_pair,
+    ncol = 1,
+    scales = "free_y",
+    axes = "all",
+    axis.labels = "all"
+  ) +
   guides(fill = "none") +
   labs(
     x = "Effect on structural fitness differences\n(SFD [99% CI])",
     y = NULL
   ) +
   base_theme +
-  theme(axis.text.y = element_blank())
+  theme(
+    axis.text.y = element_blank()
+  )
 
 # combine using patchwork
 plot_combined <- plot_snd +
@@ -176,10 +202,10 @@ plot_combined <- plot_snd +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = "a") &
   theme(
-    plot.tag = element_text(face = "bold", size = 16),
+    plot.tag = element_text(face = "bold", size = 16, color = "black"),
     legend.position = "bottom",
-    legend.title = element_text(face = "bold", size = 12),
-    legend.text = element_text(size = 12)
+    legend.title = element_text(face = "bold", size = 12, color = "black"),
+    legend.text = element_text(size = 12, color = "black")
   )
 
 
@@ -191,7 +217,7 @@ ggsave(
   plot = plot_combined,
   device = "jpeg",
   dpi = dpi,
-  height = 9,
+  height = 9.5,
   width = 8,
   bg = "white"
 )
