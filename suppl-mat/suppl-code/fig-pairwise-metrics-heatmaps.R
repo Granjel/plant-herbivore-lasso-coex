@@ -14,8 +14,8 @@ richness <- 3
 target_metric <- "SND"
 
 # parameters
-domi <- "IID"
-ratio <- "PND"
+domi <- "IIB"
+ratio <- "PNB"
 
 # set metric-specific aesthetics
 if (target_metric == "SND") {
@@ -76,29 +76,29 @@ plot_hex_heatmap <- function(data, x_col, y_col, x_lab, y_lab, metric, pal) {
 
 # generate individual panels ---------------------------------------------
 
-# row 1 (y = IID)
-p_pnd_iid <- plot_hex_heatmap(
+# row 1 (y = IIB)
+p_pnb_iib <- plot_hex_heatmap(
   df,
-  "pnd",
-  "iid",
+  "pnb",
+  "iib",
   ratio,
   domi,
   target_metric,
   color_palette
 )
-p_skew_iid <- plot_hex_heatmap(
+p_skew_iib <- plot_hex_heatmap(
   df,
   "skewness",
-  "iid",
+  "iib",
   "Skewness",
   domi,
   target_metric,
   color_palette
 )
-p_kurt_iid <- plot_hex_heatmap(
+p_kurt_iib <- plot_hex_heatmap(
   df,
   "kurtosis",
-  "iid",
+  "iib",
   "Kurtosis",
   domi,
   target_metric,
@@ -106,9 +106,9 @@ p_kurt_iid <- plot_hex_heatmap(
 )
 
 # row 2 (y = Kurtosis)
-p_pnd_kurt <- plot_hex_heatmap(
+p_pnb_kurt <- plot_hex_heatmap(
   df,
-  "pnd",
+  "pnb",
   "kurtosis",
   ratio,
   "Kurtosis",
@@ -126,9 +126,9 @@ p_skew_kurt <- plot_hex_heatmap(
 )
 
 # row 3 (y = Skewness)
-p_pnd_skew <- plot_hex_heatmap(
+p_pnb_skew <- plot_hex_heatmap(
   df,
-  "pnd",
+  "pnb",
   "skewness",
   ratio,
   "Skewness",
@@ -144,11 +144,11 @@ no_x <- theme(axis.title.x = element_blank())
 no_y <- theme(axis.title.y = element_blank())
 
 # apply modifiers to strip inner axes titles
-p_skew_iid <- p_skew_iid + no_y
-p_kurt_iid <- p_kurt_iid + no_y
-p_pnd_kurt <- p_pnd_kurt + no_x
+p_skew_iib <- p_skew_iib + no_y
+p_kurt_iib <- p_kurt_iib + no_y
+p_pnb_kurt <- p_pnb_kurt + no_x
 p_skew_kurt <- p_skew_kurt + no_x + no_y
-p_pnd_skew <- p_pnd_skew + no_x
+p_pnb_skew <- p_pnb_skew + no_x
 
 
 # legend panel -----------------------------------------------------------
@@ -194,13 +194,13 @@ snd_leg_raster <- ggplot(df, aes(x = skewness, y = kurtosis)) +
 
 # triangular layout
 arranged_snd_pairs <- ggpubr::ggarrange(
-  p_pnd_iid,
-  p_skew_iid,
-  p_kurt_iid,
-  p_pnd_kurt,
+  p_pnb_iib,
+  p_skew_iib,
+  p_kurt_iib,
+  p_pnb_kurt,
   p_skew_kurt,
   snd_leg_raster,
-  p_pnd_skew,
+  p_pnb_skew,
   ggplot() + theme_void(),
   ggplot() + theme_void(),
   align = "hv",
