@@ -135,6 +135,17 @@ plot_snd <- ggplot(
     x = "Effect on structural niche differences\n(SND [99% CI])",
     y = NULL
   ) +
+  # add the letter a inside the top left of the panel
+  annotate(
+    "text",
+    x = -Inf,
+    y = Inf,
+    label = "a",
+    fontface = "bold",
+    size = 5,
+    hjust = -1,
+    vjust = 1.25
+  ) +
   base_theme
 
 # panel b: sfd plot
@@ -161,20 +172,27 @@ plot_sfd <- ggplot(
     x = "Effect on structural fitness differences\n(SFD [99% CI])",
     y = NULL
   ) +
+  # add the letter b inside the top left of the panel
+  annotate(
+    "text",
+    x = -Inf,
+    y = Inf,
+    label = "b",
+    fontface = "bold",
+    size = 5,
+    hjust = -1,
+    vjust = 1.25
+  ) +
   base_theme +
   theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.line.y = element_blank()
+    axis.text.y = element_blank()
   )
 
 # combine using patchwork
 plot_combined <- plot_snd +
   plot_sfd +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = "a") &
+  plot_layout(guides = "collect") &
   theme(
-    plot.tag = element_text(face = "bold", size = 14),
     legend.position = "bottom",
     legend.title = element_text(face = "bold")
   )
