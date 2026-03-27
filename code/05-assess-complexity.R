@@ -107,50 +107,48 @@ get_r2_ci <- function(df_all, x_col, y_col) {
 
 # plotting limits setup --------------------------------------------------
 
+# fn to keep all empirical data, plus the middle 98% of bootstrap data
+get_smart_limits <- function(emp_vals, boot_vals, p = 0.01) {
+  lower <- min(
+    min(emp_vals, na.rm = TRUE),
+    quantile(boot_vals, p, na.rm = TRUE)
+  )
+  upper <- max(
+    max(emp_vals, na.rm = TRUE),
+    quantile(boot_vals, 1 - p, na.rm = TRUE)
+  )
+  return(c(lower, upper))
+}
+
+# isolate data types
+emp_ab <- igr_gamma_for_plotting %>% filter(bootstrapped == FALSE)
+boot_ab <- igr_gamma_for_plotting %>% filter(bootstrapped == TRUE)
+
+emp_cd <- alpha_beta_for_plotting %>% filter(bootstrapped == FALSE)
+boot_cd <- alpha_beta_for_plotting %>% filter(bootstrapped == TRUE)
+
 # panel a y-axis limit
-lims_a_y <- quantile(
-  igr_gamma_for_plotting$grasshoppers,
-  c(perc / 2, 1 - (perc / 2)),
-  na.rm = TRUE
-)
+lims_a_y <- get_smart_limits(emp_ab$grasshoppers, boot_ab$grasshoppers, perc)
 
 # shared panel a & b limits
-lims_b <- c(
-  min(
-    quantile(igr_gamma_for_plotting$igr, perc / 2, na.rm = TRUE),
-    quantile(igr_gamma_for_plotting$net_igr, perc / 2, na.rm = TRUE)
-  ),
-  max(
-    quantile(igr_gamma_for_plotting$igr, 1 - perc / 2, na.rm = TRUE),
-    quantile(igr_gamma_for_plotting$net_igr, 1 - perc / 2, na.rm = TRUE)
-  )
+lims_b <- get_smart_limits(
+  c(emp_ab$igr, emp_ab$net_igr),
+  c(boot_ab$igr, boot_ab$net_igr),
+  perc
 )
 
 # panel c y-axis limit
-lims_c_y <- quantile(
-  alpha_beta_for_plotting$beta_coefficients,
-  c(perc / 2, 1 - (perc / 2)),
-  na.rm = TRUE
+lims_c_y <- get_smart_limits(
+  emp_cd$beta_coefficients,
+  boot_cd$beta_coefficients,
+  perc
 )
 
 # shared panel c & d limits
-lims_d <- c(
-  min(
-    quantile(
-      alpha_beta_for_plotting$alpha_coefficients,
-      perc / 2,
-      na.rm = TRUE
-    ),
-    quantile(alpha_beta_for_plotting$changed, perc / 2, na.rm = TRUE)
-  ),
-  max(
-    quantile(
-      alpha_beta_for_plotting$alpha_coefficients,
-      1 - perc / 2,
-      na.rm = TRUE
-    ),
-    quantile(alpha_beta_for_plotting$changed, 1 - perc / 2, na.rm = TRUE)
-  )
+lims_d <- get_smart_limits(
+  c(emp_cd$alpha_coefficients, emp_cd$changed),
+  c(boot_cd$alpha_coefficients, boot_cd$changed),
+  perc
 )
 
 
