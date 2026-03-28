@@ -20,50 +20,7 @@ colnames(B) <- c(colnames(t(gamma)), colnames(gamma))
 AB <- as.matrix(rbind(A, B))
 
 # assign node names for the full network (plants + herbivores)
-node_names <- c(
-  "Am",
-  "Ao",
-  "Ae",
-  "Be",
-  "Cj",
-  "Ca",
-  "Cr",
-  "Dg",
-  "Dc",
-  "Er",
-  "Em",
-  "Fa",
-  "Fr",
-  "Gv",
-  "Gd",
-  "Gr",
-  "Lv",
-  "Lp",
-  "Lc",
-  "Ma",
-  "Or",
-  "Pe",
-  "Ph",
-  "Pl",
-  "Pa",
-  "Pp",
-  "Pt",
-  "Ra",
-  "Rx",
-  "Sp",
-  "So",
-  "To",
-  "Tf",
-  "Tp",
-  "Vo",
-  "Vp",
-  "Gb",
-  "Cd",
-  "Ci",
-  "Ee",
-  "Pg",
-  "Pp"
-)
+node_names <- c(species_abbrev, c("Gb", "Cd", "Ci", "Ee", "Pg", "Pp"))
 colnames(AB) <- node_names
 
 # create the igraph object for the full network
