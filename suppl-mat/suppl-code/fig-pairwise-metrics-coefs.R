@@ -29,7 +29,7 @@ pair_list <- list(
 
 # processing function ----------------------------------------------------
 
-# function to process each richness level and extract coefs for pairwise models
+# function to process each richness level and extract coefs + intercepts
 process_pairwise <- function(richness) {
   str_coex <- read.table(
     paste0(
@@ -50,7 +50,7 @@ process_pairwise <- function(richness) {
       kurtosis = as.numeric(scale(kurtosis))
     )
 
-  # iterate over pairs and extract coefficients
+  # iterate over pairs
   res_list <- lapply(pair_list, function(p) {
     f_snd <- as.formula(paste("SND ~", p$vars[1], "+", p$vars[2]))
     f_sfd <- as.formula(paste("SFD ~", p$vars[1], "+", p$vars[2]))
@@ -60,16 +60,21 @@ process_pairwise <- function(richness) {
 
     d_snd <- tidy(m_snd, conf.int = TRUE, conf.level = 0.99) %>%
       mutate(response = "SND")
+
     d_sfd <- tidy(m_sfd, conf.int = TRUE, conf.level = 0.99) %>%
       mutate(response = "SFD")
 
     bind_rows(d_snd, d_sfd) %>%
-      filter(term != "(Intercept)") %>%
       mutate(model_pair = p$name)
   })
 
-  bind_rows(res_list) %>%
-    mutate(module_size = paste(richness, "species")) %>%
+  # combine all models
+  res_all <- bind_rows(res_list) %>%
+    mutate(module_size = paste(richness, "species"))
+
+  # coefficients (used for plotting)
+  res_coefs <- res_all %>%
+    filter(term != "(Intercept)") %>%
     dplyr::select(
       response,
       model_pair,
@@ -79,13 +84,33 @@ process_pairwise <- function(richness) {
       ci_high = conf.high,
       module_size
     )
+
+  # intercepts
+  res_intercepts <- res_all %>%
+    filter(term == "(Intercept)") %>%
+    dplyr::select(
+      response,
+      model_pair,
+      estimate,
+      ci_low = conf.low,
+      ci_high = conf.high,
+      module_size
+    )
+
+  list(coefs = res_coefs, intercepts = res_intercepts)
 }
 
 
 # compute and extract data -----------------------------------------------
 
-# bind results for all richness levels
-all_results <- bind_rows(lapply(richness_levels, process_pairwise))
+all_out <- lapply(richness_levels, process_pairwise)
+
+# coefficients for plotting (unchanged workflow)
+all_results <- bind_rows(lapply(all_out, `[[`, "coefs"))
+
+# intercept table
+intercepts_table <- bind_rows(lapply(all_out, `[[`, "intercepts"))
+
 
 # prep factors for the plot
 plot_data <- all_results %>%
@@ -98,26 +123,16 @@ plot_data <- all_results %>%
 
 # plotting ---------------------------------------------------------------
 
-# shared base theme with updated aesthetics
 base_theme <- theme_classic() +
   theme(
-    # text to black
     text = element_text(color = "black"),
-
-    # draw only bottom and left axes
     axis.line = element_line(color = "black", linewidth = 0.6),
     axis.ticks = element_line(color = "black", linewidth = 0.6),
-
-    # strip settings (removes facet titles and backgrounds)
     strip.background = element_blank(),
     strip.text = element_blank(),
-
-    # text formatting
     axis.text.x = element_text(color = "black", size = 10),
     axis.text.y = element_text(color = "black", size = 11),
     axis.title.x = element_text(color = "black", size = 12),
-
-    # add vertical space between panels so the inner axes don't overlap
     panel.spacing = unit(1.2, "lines")
   )
 
@@ -192,11 +207,9 @@ plot_sfd <- ggplot(
     y = NULL
   ) +
   base_theme +
-  theme(
-    axis.text.y = element_blank()
-  )
+  theme(axis.text.y = element_blank())
 
-# combine using patchwork
+# combine
 plot_combined <- plot_snd +
   plot_sfd +
   plot_layout(guides = "collect") +
@@ -211,7 +224,15 @@ plot_combined <- plot_snd +
 
 # export -----------------------------------------------------------------
 
-# save the combined plot as a high-resolution JPEG
+# intercept table
+write.table(
+  intercepts_table,
+  "suppl-mat/suppl-tables/table-pairwise-glm-intercepts.txt",
+  row.names = FALSE,
+  sep = "\t"
+)
+
+# figure
 ggsave(
   filename = "suppl-mat/suppl-figures/fig-pairwise-metrics-coefs.jpeg",
   plot = plot_combined,
@@ -223,4 +244,4 @@ ggsave(
 )
 
 # info
-cat("Done! Pairwise coefficient forest plot saved.\n")
+cat("Done! Pairwise coefficient plot and intercept table saved.\n")
