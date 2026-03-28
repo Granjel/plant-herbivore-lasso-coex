@@ -21,7 +21,7 @@ data$cover <- round(data$cover / sum(data$cover) * 100, 2)
 
 # add lambdas
 load("data/processed/empirical/empirical-lambdas.RData")
-data$lambdas <- lambda_table$lambda_value
+data$lambdas <- round(lambda_table$lambda_value, 4)
 
 # arrange
 data <- data %>%
