@@ -53,14 +53,14 @@ process_individual_models <- function(richness) {
 
 all_results <- bind_rows(lapply(richness_levels, process_individual_models))
 
-# isolate ONLY intercepts for the supplementary table
+# isolate only intercepts
 intercept_table <- all_results %>%
   filter(term == "(Intercept)") %>%
   dplyr::select(module_size, metric, response, estimate, conf.low, conf.high)
 
 write.table(
   intercept_table,
-  file = "suppl-mat/suppl-tables/table-s-individual-glm-intercepts.txt",
+  file = "suppl-mat/suppl-tables/table-individual-glm-intercepts.txt",
   sep = "\t",
   row.names = FALSE,
   quote = FALSE
