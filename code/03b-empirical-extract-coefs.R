@@ -14,37 +14,55 @@ cat("Extracting coefficients and building interaction matrices...\n")
 
 # extract lambdas from glinternet objects --------------------------------
 
-# vector to save selected lambdas
-lambdas <- NULL
+# vectors to save selected lambdas
+lambda_idx <- NULL # index along lambda path (what you currently store)
+lambda_val <- NULL # actual lambda value
 
 # select lambda values to ensure min error and intraspecific terms
 for (i in 1:length(gli_models)) {
-  # lambda selected for minimum error
+  # lambda selected for minimum error (index)
   n_i <- which(gli_models[[i]]$lambdaHat == gli_models[[i]]$lambda)
+
   # select lambda that also includes the intra
   for (j in n_i:max_lambda) {
     if (i %in% coef(gli_models[[i]]$glinternetFit)[[j]]$mainEffects$cont) {
-      lambdas <- c(lambdas, j)
-      break #stop j when lambda is found
+      # store index
+      lambda_idx <- c(lambda_idx, j)
+
+      # store actual lambda value
+      lambda_val <- c(lambda_val, gli_models[[i]]$lambda[j])
+
+      break # stop j when lambda is found
     }
+
     if (j == max_lambda) {
-      lambdas <- c(lambdas, max_lambda)
+      # fallback: store max index
+      lambda_idx <- c(lambda_idx, max_lambda)
+
+      # fallback: store corresponding lambda value
+      lambda_val <- c(lambda_val, gli_models[[i]]$lambda[max_lambda])
     }
-  } #end j
-} #end i
+  } # end j
+} # end i
 
 # any lambda over the max?
-if (isTRUE(length(which(lambdas >= 50)) != 0)) {
+if (isTRUE(length(which(lambda_idx >= max_lambda)) != 0)) {
   cat(
-    "MESSAGE: There is an issue: the max number of lambdas was not sufficient; check affected species!!!\n"
+    "There is an issue: the max number of lambdas was not sufficient!\n"
   )
 } else {
-  cat("MESSAGE: All good with the lambdas used!\n")
+  cat("All good with the lambdas used!\n")
 }
 
-# save lambdas to know which ones were used for the coefficients extraction
-# no further use of this object, but good to have it saved for reproducibility
-save(lambdas, file = "data/processed/empirical/empirical-lambdas.RData")
+# combine into a table
+lambda_table <- data.frame(
+  species = species,
+  lambda_index = lambda_idx,
+  lambda_value = lambda_val
+)
+
+# save lambdas used for coefficient extraction
+save(lambda_table, file = "data/processed/empirical/empirical-lambdas.RData")
 
 
 # extract intrinsic growth rates, fixed, and interactive effects ---------
