@@ -67,7 +67,7 @@ species_abbrev <- c(
   "Dg",
   "Dc",
   "Er",
-  "Em",
+  "En",
   "Fa",
   "Fr",
   "Gv",
