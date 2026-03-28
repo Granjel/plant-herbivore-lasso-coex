@@ -2,50 +2,13 @@
 
 # setup ------------------------------------------------------------------
 
+# load setup
+source("code/01-setup.R")
+
 # load empirical and bootstrapped matrices
 # (assuming working directory is the project root and 01-setup.R has been run)
 load("data/processed/empirical/empirical-matrices.RData")
 load("data/processed/bootstrapped/bootstrapped-matrices.RData")
-
-# full species names (mapped to the exact order of the original species vector)
-species_full <- c(
-  "Achillea millefolium",
-  "Anthoxanthum odoratum",
-  "Arrhenatherum elatius",
-  "Bromus erectus",
-  "Centaurea jacea",
-  "Convolvulus arvensis",
-  "Crepis sp.",
-  "Dactylis glomerata",
-  "Daucus carota",
-  "Elytrigia repens",
-  "Eryngium sp.",
-  "Festuca arundinacea",
-  "Festuca rubra",
-  "Galium verum",
-  "Geranium dissectum",
-  "Geranium rotundifolium",
-  "Leucanthemum vulgare",
-  "Lolium perenne",
-  "Lotus corniculatus",
-  "Medicago arabica",
-  "Ononis repens",
-  "Picris echioides",
-  "Picris hieracioides",
-  "Plantago lanceolata",
-  "Poa angustifolia",
-  "Poa pratensis",
-  "Poa trivialis",
-  "Ranunculus acris",
-  "Rumex acetosa",
-  "Salvia pratensis",
-  "Sonchus asper",
-  "Taraxacum officinale",
-  "Trifolium fragiferum",
-  "Trifolium pratense",
-  "Verbena officinalis",
-  "Veronica persica"
-)
 
 # create plotmath-ready labels (italicize everything except 'sp.')
 parse_labels <- paste0("italic('", species_full, "')")
