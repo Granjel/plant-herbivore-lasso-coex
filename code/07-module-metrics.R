@@ -40,15 +40,28 @@ process_modules <- function(richness) {
       kurtosis = as.numeric(scale(kurtosis))
     )
 
-  # run glms
-  m_snd <- glm(SND ~ iib + pnb + skewness + kurtosis, data = str_coex_scaled)
-  m_sfd <- glm(SFD ~ iib + pnb + skewness + kurtosis, data = str_coex_scaled)
+  # run glms using Tweedie distribution
+  m_snd <- glmmTMB(
+    SND ~ iib + pnb + skewness + kurtosis,
+    family = tweedie(link = "log"),
+    data = str_coex_scaled
+  )
+  m_sfd <- glmmTMB(
+    SFD ~ iib + pnb + skewness + kurtosis,
+    family = tweedie(link = "log"),
+    data = str_coex_scaled
+  )
+
+  # check model diagnostics (uncomment if needed)
+  # simulateResiduals(fittedModel = m_snd, n = 250, plot = TRUE)
+  # simulateResiduals(fittedModel = m_sfd, n = 250, plot = TRUE)
 
   # extract cis and tag with richness
   bind_rows(
-    tidy(m_snd, conf.int = TRUE, conf.level = 0.99) %>%
+    tidy(m_snd, conf.int = TRUE, conf.level = 0.99, effects = "fixed") %>%
       mutate(response = "SND"),
-    tidy(m_sfd, conf.int = TRUE, conf.level = 0.99) %>% mutate(response = "SFD")
+    tidy(m_sfd, conf.int = TRUE, conf.level = 0.99, effects = "fixed") %>%
+      mutate(response = "SFD")
   ) %>%
     dplyr::select(
       response,
