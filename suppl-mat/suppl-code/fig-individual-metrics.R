@@ -2,7 +2,7 @@
 
 # setup ------------------------------------------------------------------
 
-# load setup
+# load setup and libraries
 source("code/01-setup.R")
 
 # define richness levels and metrics to analyse
@@ -34,13 +34,27 @@ process_individual_models <- function(richness) {
     mutate(across(all_of(metrics), ~ as.numeric(scale(.x))))
 
   lapply(metrics, function(m) {
-    m_snd <- glm(as.formula(paste("SND ~", m)), data = str_coex_scaled)
-    m_sfd <- glm(as.formula(paste("SFD ~", m)), data = str_coex_scaled)
+    # fit individual GLMs using Tweedie distribution and log-link
+    m_snd <- glmmTMB(
+      as.formula(paste("SND ~", m)),
+      family = tweedie(link = "log"),
+      data = str_coex_scaled
+    )
+    m_sfd <- glmmTMB(
+      as.formula(paste("SFD ~", m)),
+      family = tweedie(link = "log"),
+      data = str_coex_scaled
+    )
 
+    # check models with DHARMa
+    # simulateResiduals(m_snd) %>% plot()
+    # simulateResiduals(m_sfd) %>% plot()
+
+    # extract estimates and CIs using broom.mixed
     bind_rows(
-      tidy(m_snd, conf.int = TRUE, conf.level = 0.99) %>%
+      tidy(m_snd, conf.int = TRUE, conf.level = 0.99, effects = "fixed") %>%
         mutate(response = "SND"),
-      tidy(m_sfd, conf.int = TRUE, conf.level = 0.99) %>%
+      tidy(m_sfd, conf.int = TRUE, conf.level = 0.99, effects = "fixed") %>%
         mutate(response = "SFD")
     ) %>%
       mutate(metric = m, module_size = paste(richness, "species"))
@@ -51,6 +65,7 @@ process_individual_models <- function(richness) {
 
 # compute data -----------------------------------------------------------
 
+# loop through richness levels, fit models, and combine results
 all_results <- bind_rows(lapply(richness_levels, process_individual_models))
 
 # isolate only intercepts
@@ -204,4 +219,4 @@ ggsave(
 )
 
 # info
-cat("done! row-tagged supplementary grid generated.\n")
+cat("Done!\n")
