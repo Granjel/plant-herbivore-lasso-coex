@@ -11,10 +11,12 @@ library(patchwork) # for arranging ggplots
 library(mvtnorm) # for multivariate normal distribution in str stab analysis
 library(MASS) # for various statistical functions
 library(EnvStats) # for environmental statistics
-library(broom) # for tidying model outputs
+library(broom.mixed) # for tidying model outputs
 library(igraph) # for network analysis and visualization
 library(cowplot) # for arranging ggplots and saving figures
 library(magick) # for image manipulation and saving figures
+library(glmmTMB) # for generalized linear mixed models and Tweedie family
+library(DHARMa) # for model diagnostics
 
 # create main directories ------------------------------------------------
 
