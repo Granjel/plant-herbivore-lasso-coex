@@ -2,8 +2,10 @@
 
 # setup ------------------------------------------------------------------
 
-# load setup
+# load setup and required libraries
 source("code/01-setup.R")
+library(glmmTMB)
+library(broom.mixed)
 
 # define richness level (3 and 4)
 richness_levels <- c(3, 4)
@@ -55,13 +57,33 @@ process_pairwise <- function(richness) {
     f_snd <- as.formula(paste("SND ~", p$vars[1], "+", p$vars[2]))
     f_sfd <- as.formula(paste("SFD ~", p$vars[1], "+", p$vars[2]))
 
-    m_snd <- lm(f_snd, data = str_coex_scaled)
-    m_sfd <- lm(f_sfd, data = str_coex_scaled)
+    # Fit GLMs using Tweedie distribution and log-link
+    m_snd <- glmmTMB(
+      f_snd,
+      family = tweedie(link = "log"),
+      data = str_coex_scaled
+    )
+    m_sfd <- glmmTMB(
+      f_sfd,
+      family = tweedie(link = "log"),
+      data = str_coex_scaled
+    )
 
-    d_snd <- tidy(m_snd, conf.int = TRUE, conf.level = 0.99) %>%
+    # Extract estimates and CIs using broom.mixed
+    d_snd <- tidy(
+      m_snd,
+      conf.int = TRUE,
+      conf.level = 0.99,
+      effects = "fixed"
+    ) %>%
       mutate(response = "SND")
 
-    d_sfd <- tidy(m_sfd, conf.int = TRUE, conf.level = 0.99) %>%
+    d_sfd <- tidy(
+      m_sfd,
+      conf.int = TRUE,
+      conf.level = 0.99,
+      effects = "fixed"
+    ) %>%
       mutate(response = "SFD")
 
     bind_rows(d_snd, d_sfd) %>%
@@ -103,6 +125,7 @@ process_pairwise <- function(richness) {
 
 # compute and extract data -----------------------------------------------
 
+# process each model
 all_out <- lapply(richness_levels, process_pairwise)
 
 # coefficients for plotting (unchanged workflow)
@@ -123,6 +146,7 @@ plot_data <- all_results %>%
 
 # plotting ---------------------------------------------------------------
 
+# define a base theme for consistency
 base_theme <- theme_classic() +
   theme(
     text = element_text(color = "black"),
