@@ -36,6 +36,7 @@ if (!dir.exists("suppl-mat")) {
   dir.create("suppl-mat/suppl-code")
   dir.create("suppl-mat/suppl-figures")
   dir.create("suppl-mat/suppl-tables")
+  dir.create("suppl-mat/packages")
 }
 
 
@@ -132,4 +133,12 @@ species_full <- c(
   "Trifolium pratense",
   "Verbena officinalis",
   "Veronica persica"
+)
+
+# grateful to cite packages used in the analyses
+library(grateful)
+cite_packages(
+  out.format = "docx",
+  out.dir = "suppl-mat/packages",
+  citation.style = "oikos"
 )
