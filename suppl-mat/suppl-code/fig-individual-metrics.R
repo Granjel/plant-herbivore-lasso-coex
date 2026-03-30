@@ -105,9 +105,9 @@ make_mini_plot <- function(
 
   x_label <- if (show_x) {
     if (resp_name == "SND") {
-      "Effect on structural niche differences\n(SND [99% CI])"
+      "Effect on structural niche differences"
     } else {
-      "Effect on structural fitness differences\n(SFD [99% CI])"
+      "Effect on structural fitness differences"
     }
   } else {
     NULL
