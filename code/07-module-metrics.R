@@ -145,7 +145,7 @@ plot_snd <- ggplot(
     )
   ) +
   labs(
-    x = "Effect on structural niche differences\n(SND [99% CI])",
+    x = "Effect on structural niche differences",
     y = NULL
   ) +
   # add the letter a inside the top left of the panel
@@ -182,7 +182,7 @@ plot_sfd <- ggplot(
   ) +
   guides(fill = "none") +
   labs(
-    x = "Effect on structural fitness differences\n(SFD [99% CI])",
+    x = "Effect on structural fitness differences",
     y = NULL
   ) +
   # add the letter b inside the top left of the panel
@@ -218,7 +218,7 @@ ggsave(
   plot = plot_combined,
   device = "jpeg",
   dpi = dpi,
-  height = 4,
+  height = 3.75,
   width = 6.5
 )
 
