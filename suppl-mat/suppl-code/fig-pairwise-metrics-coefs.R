@@ -197,7 +197,7 @@ plot_snd <- ggplot(
       )
     )
   ) +
-  labs(x = "Effect on structural niche differences\n(SND [99% CI])", y = NULL) +
+  labs(x = "Effect on structural niche differences", y = NULL) +
   base_theme
 
 # panel b: sfd plot
@@ -227,7 +227,7 @@ plot_sfd <- ggplot(
   ) +
   guides(fill = "none") +
   labs(
-    x = "Effect on structural fitness differences\n(SFD [99% CI])",
+    x = "Effect on structural fitness differences",
     y = NULL
   ) +
   base_theme +
