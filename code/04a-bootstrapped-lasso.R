@@ -1,4 +1,5 @@
 # bootstrapped interaction coefficients with LV and lasso regularisation
+# warning: do not run; it needs a HPC cluster
 
 # setup and compute bootstrapped data ------------------------------------
 
@@ -6,7 +7,7 @@
 source("code/02-lasso-parameters.R")
 
 # times to resample (number of bootstraps)
-t_boot <- 100
+t_boot <- 1000
 
 # nest the data per species
 df <- data %>%
