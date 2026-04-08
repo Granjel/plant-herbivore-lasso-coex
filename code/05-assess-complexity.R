@@ -159,7 +159,7 @@ max_hex_density <- 800
 
 hex_scale <- scale_fill_gradient(
   low = "grey99",
-  high = "grey34",
+  high = "grey35",
   trans = "log10",
   limits = c(1, max_hex_density),
   oob = scales::squish
