@@ -154,60 +154,86 @@ lims_d <- get_smart_limits(
 
 # plotting ---------------------------------------------------------------
 
+# calibrated global max density
+max_hex_density <- 800
+
+hex_scale <- scale_fill_gradient(
+  low = "grey99",
+  high = "grey34",
+  trans = "log10",
+  limits = c(1, max_hex_density),
+  oob = scales::squish
+)
+
 # panel a: igr vs gamma
 stats_a <- get_r2_ci(igr_gamma_for_plotting, "igr", "grasshoppers")
+
 plot_a <- ggplot(
-  data = igr_gamma_for_plotting %>% filter(bootstrapped == TRUE),
+  data = igr_gamma_for_plotting %>% filter(bootstrapped),
   aes(x = igr, y = grasshoppers)
 ) +
-  geom_point(alpha = transparency, color = "grey") +
-  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_hex(bins = 42, color = NA, show.legend = FALSE) +
+  hex_scale +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dotted",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
   scale_x_continuous(limits = lims_b) +
   scale_y_continuous(limits = lims_a_y) +
   geom_point(
-    data = igr_gamma_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = igr, y = grasshoppers),
+    data = igr_gamma_for_plotting %>% filter(!bootstrapped),
     color = "black",
-    shape = 19
+    size = 1.8,
+    alpha = 0.9
   ) +
   geom_smooth(
-    data = igr_gamma_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = igr, y = grasshoppers),
+    data = igr_gamma_for_plotting %>% filter(!bootstrapped),
     method = "glm",
     color = color_smooth,
-    se = FALSE
+    se = FALSE,
+    linewidth = 1.2
   ) +
   ggtitle(parse(text = stats_a)) +
   xlab(expression(atop("", "Intrinsic growth rates (r)"))) +
   ylab(expression(atop("Direct herbivory", "effects (" * gamma * ")"))) +
   theme_classic() +
   theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
+    plot.title = element_text(size = 11, hjust = 0.5),
     axis.title.x = element_text(color = NA)
   )
 
-# panel b: net effect on growth
+# panel b: net igr
 stats_b <- get_r2_ci(igr_gamma_for_plotting, "igr", "net_igr")
+
 plot_b <- ggplot(
-  data = igr_gamma_for_plotting %>% filter(bootstrapped == TRUE),
+  data = igr_gamma_for_plotting %>% filter(bootstrapped),
   aes(x = igr, y = net_igr)
 ) +
-  geom_point(alpha = transparency, color = "grey") +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
+  geom_hex(bins = 42, color = NA, show.legend = FALSE) +
+  hex_scale +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
   scale_x_continuous(limits = lims_b) +
   scale_y_continuous(limits = lims_b) +
   geom_point(
-    data = igr_gamma_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = igr, y = net_igr),
+    data = igr_gamma_for_plotting %>% filter(!bootstrapped),
     color = "black",
-    shape = 19
+    size = 1.8,
+    alpha = 0.9
   ) +
   geom_smooth(
-    data = igr_gamma_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = igr, y = net_igr),
+    data = igr_gamma_for_plotting %>% filter(!bootstrapped),
     method = "glm",
     color = color_smooth,
-    se = FALSE
+    se = FALSE,
+    linewidth = 1.2
   ) +
   ggtitle(parse(text = stats_b)) +
   xlab(expression(atop("", "Intrinsic growth rates (r)"))) +
@@ -216,7 +242,7 @@ plot_b <- ggplot(
     "with herbivory (r + " * gamma * ")"
   ))) +
   theme_classic() +
-  theme(plot.title = element_text(size = 11, face = "plain", hjust = 0.5))
+  theme(plot.title = element_text(size = 11, hjust = 0.5))
 
 # panel c: alpha vs beta
 stats_c <- get_r2_ci(
@@ -224,85 +250,112 @@ stats_c <- get_r2_ci(
   "alpha_coefficients",
   "beta_coefficients"
 )
+
 plot_c <- ggplot(
-  data = alpha_beta_for_plotting %>% filter(bootstrapped == TRUE),
+  data = alpha_beta_for_plotting %>% filter(bootstrapped),
   aes(x = alpha_coefficients, y = beta_coefficients)
 ) +
-  geom_point(alpha = transparency, color = "grey") +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_vline(xintercept = 0, linetype = "dotted") +
+  geom_hex(bins = 42, color = NA, show.legend = FALSE) +
+  hex_scale +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dotted",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dotted",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
   scale_x_continuous(limits = lims_d) +
   scale_y_continuous(limits = lims_c_y) +
   geom_point(
-    data = alpha_beta_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = alpha_coefficients, y = beta_coefficients),
+    data = alpha_beta_for_plotting %>% filter(!bootstrapped),
     color = "black",
-    shape = 19
+    size = 1.8,
+    alpha = 0.9
   ) +
   geom_smooth(
-    data = alpha_beta_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = alpha_coefficients, y = beta_coefficients),
+    data = alpha_beta_for_plotting %>% filter(!bootstrapped),
     method = "glm",
     color = color_smooth,
-    se = FALSE
+    se = FALSE,
+    linewidth = 1.2
   ) +
   ggtitle(parse(text = stats_c)) +
   xlab(expression(atop("", "Plant-plant interactions (" * alpha * ")"))) +
   ylab(expression(atop("Higher-order interactions", "(HOIs; " * beta * ")"))) +
   theme_classic() +
   theme(
-    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
+    plot.title = element_text(size = 11, hjust = 0.5),
     axis.title.x = element_text(color = NA)
   )
 
 # panel d: alpha vs changed
 stats_d <- get_r2_ci(alpha_beta_for_plotting, "alpha_coefficients", "changed")
+
 plot_d <- ggplot(
-  data = alpha_beta_for_plotting %>% filter(bootstrapped == TRUE),
+  data = alpha_beta_for_plotting %>% filter(bootstrapped),
   aes(x = alpha_coefficients, y = changed)
 ) +
-  geom_point(alpha = transparency, color = "grey") +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_vline(xintercept = 0, linetype = "dotted") +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
+  geom_hex(bins = 42, color = NA, show.legend = FALSE) +
+  hex_scale +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dotted",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dotted",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed",
+    color = "grey20",
+    linewidth = 0.6
+  ) +
   scale_x_continuous(limits = lims_d) +
   scale_y_continuous(limits = lims_d) +
   geom_point(
-    data = alpha_beta_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = alpha_coefficients, y = changed),
+    data = alpha_beta_for_plotting %>% filter(!bootstrapped),
     color = "black",
-    shape = 19
+    size = 1.8,
+    alpha = 0.9
   ) +
   geom_smooth(
-    data = alpha_beta_for_plotting %>% filter(bootstrapped == FALSE),
-    aes(x = alpha_coefficients, y = changed),
+    data = alpha_beta_for_plotting %>% filter(!bootstrapped),
     method = "glm",
     color = color_smooth,
-    se = FALSE
+    se = FALSE,
+    linewidth = 1.2
   ) +
   ggtitle(parse(text = stats_d)) +
   xlab(expression(atop("", "Plant-plant interactions (" * alpha * ")"))) +
   ylab(expression(atop(
     "Plant-plant interactions",
-    "with HOIs (" * alpha + beta * ")"
+    "with HOIs (" * (alpha + beta) * ")"
   ))) +
   theme_classic() +
-  theme(plot.title = element_text(size = 11, face = "plain", hjust = 0.5))
+  theme(plot.title = element_text(size = 11, hjust = 0.5))
 
 
-# final assembly using patchwork -----------------------------------------
+# final assembly ---------------------------------------------------------
 
-# patchwork formula to automatically handle layout and alignment
 arranged_all <- (plot_a | plot_c) /
   (plot_b | plot_d) +
   plot_annotation(tag_levels = 'a') &
   theme(plot.tag = element_text(size = 14, face = "bold"))
 
-# save the arranged plot
 ggsave(
   "results/figures/fig-complexity.jpeg",
   plot = arranged_all,
-  device = "jpeg",
   dpi = dpi,
   height = 6.25,
   width = 7.25
