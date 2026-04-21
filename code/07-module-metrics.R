@@ -10,8 +10,8 @@ richness_levels <- c(3, 4)
 
 # define metric labels for plotting
 metric_labels <- c(
-  "iib" = "IIB",
-  "pnb" = "PNB",
+  "iib" = "Intra-Interspecific\nBalance (IIB)",
+  "pnb" = "Positive-Negative\nBalance (PNB)",
   "skewness" = "Skewness",
   "kurtosis" = "Kurtosis"
 )
@@ -218,7 +218,7 @@ ggsave(
   plot = plot_combined,
   device = "jpeg",
   dpi = dpi,
-  height = 3.75,
+  height = 3.5,
   width = 6.5
 )
 
