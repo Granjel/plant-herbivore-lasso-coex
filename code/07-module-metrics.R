@@ -4,6 +4,7 @@
 
 # load setup and libraries
 source("code/01-setup.R")
+library(cowplot)
 
 # define module sizes to process
 richness_levels <- c(3, 4)
@@ -40,19 +41,20 @@ process_modules <- function(richness) {
       kurtosis = as.numeric(scale(kurtosis))
     )
 
-  # run glms using Tweedie distribution
+  # run glms using tweedie distribution
   m_snd <- glmmTMB(
     SND ~ iib + pnb + skewness + kurtosis,
     family = tweedie(link = "log"),
     data = str_coex_scaled
   )
+
   m_sfd <- glmmTMB(
     SFD ~ iib + pnb + skewness + kurtosis,
     family = tweedie(link = "log"),
     data = str_coex_scaled
   )
 
-  # check model diagnostics (uncomment if needed)
+  # check model diagnostics
   # simulateResiduals(fittedModel = m_snd, n = 250, plot = TRUE)
   # simulateResiduals(fittedModel = m_sfd, n = 250, plot = TRUE)
 
@@ -72,7 +74,6 @@ process_modules <- function(richness) {
     ) %>%
     mutate(module_size = paste(richness, "species"))
 }
-
 
 # compute and extract data -----------------------------------------------
 
@@ -97,11 +98,30 @@ write.table(
 plot_data <- all_results %>%
   filter(term != "(Intercept)") %>%
   mutate(
-    term = factor(term, levels = rev(c("iib", "pnb", "skewness", "kurtosis"))),
-    # Ensure proper ordering so 3 species dodges "above" 4 species visually
+    hypothesis_support = case_when(
+      # expected effects for snd are positive
+      response == "SND" & estimate > 0 ~ "Yes",
+      response == "SND" & estimate <= 0 ~ "No",
+
+      # expected effects for sfd are negative for iib and pnb
+      response == "SFD" & term %in% c("iib", "pnb") & estimate < 0 ~ "Yes",
+      response == "SFD" & term %in% c("iib", "pnb") & estimate >= 0 ~ "No",
+
+      # unclear expectation for skewness and kurtosis effects on sfd
+      response == "SFD" & term %in% c("skewness", "kurtosis") ~
+        "Unclear expectation"
+    ),
+    hypothesis_support = factor(
+      hypothesis_support,
+      levels = c("Yes", "No", "Unclear expectation")
+    ),
+    term = factor(
+      term,
+      levels = rev(c("iib", "pnb", "skewness", "kurtosis"))
+    ),
+    # ensure proper ordering so 3 species dodges above 4 species visually
     module_size = factor(module_size, levels = c("4 species", "3 species"))
   )
-
 
 # plotting ---------------------------------------------------------------
 
@@ -111,18 +131,31 @@ base_theme <- theme_classic() +
     axis.text = element_text(color = "black", size = 10),
     axis.title = element_text(color = "black", size = 10),
     strip.background = element_blank(),
-    strip.text = element_text(face = "bold", size = 12)
+    strip.text = element_text(face = "bold", size = 12),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.box = "horizontal"
   )
 
 # panel a: snd plot
 plot_snd <- ggplot(
   plot_data %>% filter(response == "SND"),
-  aes(x = estimate, y = term, fill = module_size, group = module_size)
+  aes(
+    x = estimate,
+    y = term,
+    fill = module_size,
+    shape = hypothesis_support,
+    group = module_size
+  )
 ) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dashed",
+    color = "grey50"
+  ) +
   geom_pointrange(
     aes(xmin = ci_low, xmax = ci_high),
-    shape = 21,
+    orientation = "y",
     color = "#be3872",
     size = 0.55,
     stroke = 0.8,
@@ -133,6 +166,15 @@ plot_snd <- ggplot(
     values = c("3 species" = "white", "4 species" = "#be3872"),
     breaks = c("3 species", "4 species")
   ) +
+  scale_shape_manual(
+    values = c(
+      "Yes" = 21,
+      "No" = 22,
+      "Unclear expectation" = 24
+    ),
+    breaks = c("Yes", "No", "Unclear expectation"),
+    drop = FALSE
+  ) +
   guides(
     fill = guide_legend(
       title = "Module size",
@@ -142,13 +184,13 @@ plot_snd <- ggplot(
         fill = c("white", "black"),
         stroke = 0.8
       )
-    )
+    ),
+    shape = "none"
   ) +
   labs(
-    x = "Effect on structural niche differences",
+    x = "Association with structural\nniche differences",
     y = NULL
   ) +
-  # add the letter a inside the top left of the panel
   annotate(
     "text",
     x = -Inf,
@@ -159,17 +201,30 @@ plot_snd <- ggplot(
     hjust = -1,
     vjust = 1.25
   ) +
-  base_theme
+  base_theme +
+  theme(
+    legend.position = "bottom"
+  )
 
 # panel b: sfd plot
 plot_sfd <- ggplot(
   plot_data %>% filter(response == "SFD"),
-  aes(x = estimate, y = term, fill = module_size, group = module_size)
+  aes(
+    x = estimate,
+    y = term,
+    fill = module_size,
+    shape = hypothesis_support,
+    group = module_size
+  )
 ) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dashed",
+    color = "grey50"
+  ) +
   geom_pointrange(
     aes(xmin = ci_low, xmax = ci_high),
-    shape = 21,
+    orientation = "y",
     color = "#208f8a",
     size = 0.55,
     stroke = 0.8,
@@ -180,12 +235,32 @@ plot_sfd <- ggplot(
     values = c("3 species" = "white", "4 species" = "#208f8a"),
     breaks = c("3 species", "4 species")
   ) +
-  guides(fill = "none") +
+  scale_shape_manual(
+    values = c(
+      "Yes" = 21,
+      "No" = 22,
+      "Unclear expectation" = 24
+    ),
+    breaks = c("Yes", "No", "Unclear expectation"),
+    drop = FALSE
+  ) +
+  guides(
+    fill = "none",
+    shape = guide_legend(
+      title = "Matches Fig. 2 expectations?",
+      override.aes = list(
+        fill = "black",
+        color = "black",
+        stroke = 0.8,
+        linetype = 0,
+        linewidth = 0
+      )
+    )
+  ) +
   labs(
-    x = "Effect on structural fitness differences",
+    x = "Association with structural\nfitness differences",
     y = NULL
   ) +
-  # add the letter b inside the top left of the panel
   annotate(
     "text",
     x = -Inf,
@@ -198,31 +273,39 @@ plot_sfd <- ggplot(
   ) +
   base_theme +
   theme(
-    axis.text.y = element_blank()
+    axis.text.y = element_blank(),
+    legend.position = "top"
   )
 
-# combine using patchwork
-plot_combined <- plot_snd +
-  plot_sfd +
-  plot_layout(guides = "collect") &
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(face = "bold")
-  )
+# extract legends so they can span the whole figure
+legend_top <- cowplot::get_legend(plot_sfd)
+legend_bottom <- cowplot::get_legend(plot_snd)
 
+# remove legends from the actual panels
+plot_snd_panel <- plot_snd + theme(legend.position = "none")
+plot_sfd_panel <- plot_sfd + theme(legend.position = "none")
+
+# combine panels
+plots_row <- plot_snd_panel +
+  plot_sfd_panel +
+  plot_layout(widths = c(1, 1))
+
+# assemble full figure with full-width legends
+plot_combined <- (patchwork::wrap_elements(legend_top) /
+  plots_row /
+  patchwork::wrap_elements(legend_bottom)) +
+  plot_layout(heights = c(0.16, 1, 0.14))
 
 # export -----------------------------------------------------------------
 
 ggsave(
-  filename = "results/figures/fig-glm-all-additive-effects.jpeg",
+  filename = "results/figures/fig-glm-all-additive.jpeg",
   plot = plot_combined,
   device = "jpeg",
   dpi = dpi,
-  height = 3.5,
-  width = 6.5
+  height = 4.3,
+  width = 6.8
 )
 
 # info
-cat(
-  "Done!\n"
-)
+cat("Done!\n")
