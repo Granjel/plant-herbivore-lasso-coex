@@ -1,4 +1,4 @@
-Computational analyses for the article "Simple interaction structure governs niche and fitness differences in a multitrophic grassland community."
+Computational analyses for the article "Simple plant–plant interaction patterns predict structural niche and fitness differences in a multitrophic grassland community."
 
 ## Data
 
