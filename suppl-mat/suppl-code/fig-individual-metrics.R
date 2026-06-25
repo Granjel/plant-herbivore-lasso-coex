@@ -105,9 +105,9 @@ make_mini_plot <- function(
 
   x_label <- if (show_x) {
     if (resp_name == "SND") {
-      "Association with structural niche differences"
+      "Association with structural\nniche differences"
     } else {
-      "Association with structural fitness differences"
+      "Association with structural\nfitness differences"
     }
   } else {
     NULL
