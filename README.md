@@ -1,17 +1,371 @@
-Computational analyses for the article "Simple plant–plant interaction patterns predict structural niche and fitness differences in a multitrophic grassland community."
+# Simple plant–plant interaction patterns predict structural niche and fitness differences in a multitrophic grassland community
 
-## Data
+Analysis code and data accompanying the _Oikos_ manuscript by Granjel _et al._
 
-### `data/raw/empirical-dataset.txt`
+## Overview
 
-This dataset contains plant community composition and cover data from a grassland experiment manipulating herbivore assemblages and plant communities. Each row represents a sampling unit within a given block, treatment, and time point. Metadata columns describe the experimental design (time, date, block, treatment, datapoint, focal species, and total cover), while the majority of columns correspond to individual plant species recorded as percent cover. Additional columns summarise functional groups (legumes, grasses, other) and the composition of the herbivore community (grasshopper species abundances or presence).
+The project estimates plant–plant and plant–grasshopper interaction coefficients using hierarchical lasso regularisation, evaluates direct herbivore effects and higher-order interactions, and relates plant interaction-structure metrics to structural niche and fitness differences in three- and four-species plant modules.
 
-The data are structured to support the estimation of plant–plant and plant–herbivore interactions in a multitrophic context. Species-level cover values form the community matrix used for modelling, while herbivore variables encode the experimentally controlled treatments that allow inference of both direct effects and higher-order interaction modifications. The dataset includes repeated observations across treatments and time, enabling analyses of community dynamics and coexistence mechanisms.
+Keep the complete folder hierarchy when extracting this project. Run R with the **project root** as the working directory, not `code/` or `suppl-mat/suppl-code/`. The root is the directory that contains `code/`, `data/`, `suppl-mat/` and this README.
 
-### `data/raw/full-plant-community-cover.txt`
+## Directory structure
 
-This dataset contains species-level plant cover observations in long format. Each row represents a single observation of a species (“Spcode”) and its corresponding percent cover value (“Cover”) recorded within a sampling unit. It is used to produce Table S1.
+```text
+project-root/
+├── README.md
+├── LICENSE
+├── code/
+│   ├── 00-pipeline.R
+│   ├── 01-setup.R
+│   ├── 02-lasso-parameters.R
+│   ├── 03a-empirical-lasso.R
+│   ├── 03b-empirical-extract-coefs.R
+│   ├── 03c-empirical-build-matrices.R
+│   ├── 04a-bootstrapped-lasso.R
+│   ├── 04b-bootstrapped-extract-coefs.R
+│   ├── 04c-bootstrapped-build-matrices.R
+│   ├── 05-assess-complexity.R
+│   ├── 06-structural-stability.R
+│   └── 07-module-metrics.R
+├── data/
+│   ├── raw/
+│   │   ├── empirical-dataset.txt
+│   │   └── full-plant-community-cover.txt
+│   └── processed/                  # generated or supplied precomputed files
+│       ├── empirical/
+│       └── bootstrapped/
+├── results/                        # generated outputs
+│   ├── figures/
+│   └── tables/
+└── suppl-mat/
+    ├── suppl-code/                  # supplied supplementary scripts
+    ├── suppl-figures/               # generated outputs
+    ├── suppl-tables/                # generated outputs
+    └── packages/                    # generated package citation report
+```
 
-## Code
+Relative paths inside the folder must be kept. Processed data and output directories are populated by the analysis scripts.
 
-The scripts in `code` represent the main analytical pipeline and can be run using the `code/00-pipeline.R` script, which is self-explanatory. The scripts in `suppl-mat/suppl-code` can be run in any order and reproduce the results shown in the supplementary materials.
+## Requirements
+
+The analyses were conducted using **R 4.4.3**. The source archive does not contain a package lockfile; the dependencies below must be installed in the R environment used to run the scripts.
+
+Install the following packages for the main and supplementary analyses:
+
+```r
+packages <- c(
+  "tidyverse", "glinternet", "doSNOW", "foreach", "beepr", "patchwork",
+  "mvtnorm", "MASS", "EnvStats", "broom.mixed", "igraph", "cowplot",
+  "magick", "glmmTMB", "DHARMa", "grateful", "ggpubr", "hexbin"
+)
+missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) install.packages(missing)
+```
+
+`parallel` is distributed with R; `dplyr` and `scales` are dependencies of the listed packages.
+
+`01-setup.R` also uses `grateful::cite_packages()` to produce a package citation report in `suppl-mat/packages/`. This step requires Pandoc. Installing `magick` from source may require system ImageMagick libraries.
+
+Bootstrap fitting uses parallel processing and 1,000 resampled datasets per focal plant species. This is a computationally intensive stage intended for high-performance computing. Runtime and memory use depend on the available hardware and number of workers.
+
+## Before running
+
+Start a fresh R session with the extracted project root as the working directory. Check the input paths and create the output directories:
+
+```r
+stopifnot(
+  file.exists("code/01-setup.R"),
+  file.exists("data/raw/empirical-dataset.txt"),
+  file.exists("data/raw/full-plant-community-cover.txt")
+)
+
+# create output directories even when their parent folders already exist
+output_dirs <- c(
+  "data/processed/empirical", "data/processed/bootstrapped",
+  "results/figures", "results/tables",
+  "suppl-mat/suppl-figures", "suppl-mat/suppl-tables", "suppl-mat/packages"
+)
+invisible(lapply(output_dirs, dir.create, recursive = TRUE, showWarnings = FALSE))
+```
+
+These commands create all required output subdirectories without changing existing files.
+
+## Execution
+
+### A. Reuse precomputed analysis objects
+
+This route requires the following intermediate files, either supplied with the analysis archive or generated by the full workflow:
+
+```text
+data/processed/empirical/empirical-matrices.RData
+data/processed/bootstrapped/bootstrapped-matrices.RData
+data/processed/empirical/str-coex-modules-3-species.txt
+data/processed/empirical/str-coex-modules-4-species.txt
+```
+
+The species-summary table script additionally requires `data/processed/empirical/empirical-lambdas.RData`.
+
+With the four main files present, run:
+
+```r
+source("code/05-assess-complexity.R")
+source("code/07-module-metrics.R")
+```
+
+This skips refitting the lasso and uses existing module-level tables. It generates the main coefficient-comparison figure and additive module-metric figure. The network figure is generated separately by `suppl-mat/suppl-code/fig-network-histogram.R`.
+
+### B. Recompute from the input data
+
+**Compatibility note for the source archive:** in `03b-empirical-extract-coefs.R`, the coefficient-extraction loop references `lambdas[i]`, whereas the selected indices are stored in `lambda_idx`. A clean-session execution of this source version requires `n_i <- lambda_idx[i]` at that lookup.
+
+Configure the `n_cores` assignment in `03a-empirical-lasso.R` and `04a-bootstrapped-lasso.R` for the resources actually allocated to your job. The empirical default uses detected logical cores minus two; the bootstrap default uses all detected logical cores. Ensure at least one worker and do not request more workers than your allocation or memory can support.
+
+Run these scripts in order from the project root:
+
+```r
+# fit empirical models, extract coefficients, build matrices
+source("code/03a-empirical-lasso.R")
+source("code/03b-empirical-extract-coefs.R")
+source("code/03c-empirical-build-matrices.R")
+
+# computationally intensive bootstrap stage
+source("code/04a-bootstrapped-lasso.R")
+source("code/04b-bootstrapped-extract-coefs.R")
+source("code/04c-bootstrapped-build-matrices.R")
+
+# compare empirical and bootstrap interaction summaries
+source("code/05-assess-complexity.R")
+```
+
+Then generate **both** module sizes. In `code/06-structural-stability.R`, leave `richness <- 3` and run:
+
+```r
+source("code/06-structural-stability.R")
+```
+
+Change that assignment **inside the script** to `richness <- 4`, save it and run the same command again. Setting `richness` only in the console will not override the assignment inside the script. Each size is written to a differently named file. With 36 species, the loop considers 7,140 three-species combinations and 58,905 four-species combinations before removing incomplete numerical results.
+
+Once both tables exist:
+
+```r
+stopifnot(
+  file.exists("data/processed/empirical/str-coex-modules-3-species.txt"),
+  file.exists("data/processed/empirical/str-coex-modules-4-species.txt")
+)
+source("code/07-module-metrics.R")
+```
+
+### About `00-pipeline.R`
+
+`code/00-pipeline.R` is a convenience driver for the main analyses. It assigns `full_run <- FALSE` internally, so it skips lasso fitting and expects precomputed matrices. Even with `full_run <- TRUE`, it calls `06-structural-stability.R` only once, while `07-module-metrics.R` reads both module sizes. Use the explicit sequence above unless both module tables are already available. Setting `full_run` in the console does not override the script's own assignment.
+
+### Supplementary and network outputs
+
+Run these scripts after their input files have been created. They are not called by `00-pipeline.R`.
+
+| Script in `suppl-mat/suppl-code/` | Required inputs | Output or purpose |
+|---|---|---|
+| `fig-network-histogram.R` | Empirical matrices | Networks and non-zero coefficient distributions; written to `suppl-mat/suppl-figures/fig-networks-histograms.jpeg`. Used for the main network figure despite its script location. |
+| `fig-data-availability.R` | `empirical-dataset.txt` | Selected focal/neighbour cover-change plots; written to `fig-data-availability.jpeg`. |
+| `fig-species-growth-rates.R` | Empirical and bootstrap matrices | Species-specific growth-rate estimates; written to `fig-species-growth-rates.jpeg`. |
+| `fig-individual-metrics.R` | Both module tables | Separate models for each metric; `fig-individual-metrics.jpeg` and `table-individual-glm-intercepts.txt`. |
+| `fig-pairwise-metrics-coefs.R` | Both module tables | Pairwise predictor models; `fig-pairwise-metrics-coefs.jpeg` and `table-pairwise-glm-intercepts.txt`. |
+| `fig-pairwise-metrics-heatmaps.R` | Module table for the selected size | Heatmaps; run all four combinations of `richness` = 3/4 and `target_metric` = `"SND"`/`"SFD"` by changing the assignments inside this script. |
+| `fig-structural-herbivory.R` | Empirical matrices | Structural fitness-difference shifts with herbivory for both module sizes; written to `fig-sfd-herbivory.jpeg`. |
+| `table-species-models-info.R` | Both input data files and `empirical-lambdas.RData` | Species codes, names, relative cover, record counts and selected lambda values; written to `suppl-mat/suppl-tables/table-species-models-info.txt`. |
+
+For example:
+
+```r
+source("suppl-mat/suppl-code/fig-network-histogram.R")
+source("suppl-mat/suppl-code/table-species-models-info.R")
+```
+
+Once dependencies are present, the supplementary scripts can generally be run independently. The conceptual artwork is not generated by these R scripts.
+
+## Generated files and analytical quantities
+
+| File | Contents |
+|---|---|
+| `empirical-lasso-models.RData` | List `gli_models`, one fitted model per focal plant species. |
+| `empirical-lambdas.RData` | `lambda_table`: `species`, `lambda_index`, `lambda_value`. |
+| `empirical-coefficients.RData` | Species and grasshopper codes, `igr`, lower-order coefficients (`fixed`) and statistical interaction coefficients (`inter`). |
+| `empirical-matrices.RData` | `igr`, `alpha`, `gamma`, `beta_pp`, `beta_gp`, `species`, `grasshoppers`. |
+| `bootstrapped-lasso-models.RData` | Resampled focal-species datasets and fitted models. |
+| `bootstrapped-coefficients.RData` | Extracted coefficient sets grouped by `boot_id`. |
+| `bootstrapped-matrices.RData` | `boot_matrices`, containing growth-rate vectors and interaction matrices for retained bootstrap sets. |
+| `str-coex-modules-3-species.txt`, `str-coex-modules-4-species.txt` | Tab-delimited module-level structural outputs and interaction-structure metrics. |
+| `results/figures/fig-complexity.jpeg` | Empirical/bootstrap coefficient comparison panels. |
+| `results/figures/fig-glm-all-additive.jpeg` | Additive associations of interaction-structure metrics with structural niche and fitness differences. |
+| `results/tables/table-glm-all-additive-intercepts.txt` | Intercepts and 99% confidence intervals for additive models. |
+
+The empirical files above are under `data/processed/empirical/`; the bootstrap files are under `data/processed/bootstrapped/`.
+
+`alpha` is the 36 × 36 plant interaction matrix, with focal plants in rows and influencing plants in columns. `gamma` is the 36 × 6 grasshopper-effect matrix. `beta_pp` contains 36 plant-mediated matrices and `beta_gp` contains six grasshopper-mediated matrices. Plant-mediated statistical interaction coefficients are split equally between the two symmetric predictor orderings when those matrices are assembled. Their subsequent sums should therefore use the supplied matrix-building and plotting code rather than independently duplicating coefficients.
+
+Module-level columns are:
+
+| Column | Definition in the supplied code |
+|---|---|
+| `n` | Number of plant species in the module: 3 or 4. |
+| `combos` | Plant codes joined by underscores. |
+| `SND` | Normalised structural niche-difference measure, `10^Omega(alpha) = 2^n × d`, where `d` is the calculated multivariate normal positive-orthant probability. Dimensionless. |
+| `SFD` | Angle between the intrinsic growth-rate vector and the feasibility-domain centroid vector calculated by `r_centroid()`. Units: degrees. |
+| `feasibility` | Indicator returned by the implemented criterion `all(solve(alpha, intrinsic) > 0)`: 1 if true, 0 otherwise. |
+| `intra` | Arithmetic mean of the signed diagonal coefficients. |
+| `inter` | Arithmetic mean of the signed off-diagonal coefficients. |
+| `iib` | `intra - inter`; neither an absolute difference nor a difference between mean absolute magnitudes. |
+| `skewness` | `skewness(as.numeric(alpha))` for the full module matrix, including diagonal entries and zeros. |
+| `kurtosis` | `kurtosis(as.numeric(alpha))` for the full module matrix, including diagonal entries and zeros; retain the estimator convention of the package/environment used. |
+| `pnb` | Sum of all signed coefficients in the module matrix. |
+
+`06-structural-stability.R` removes rows with missing results through `complete.cases()`. The two module tables therefore need not contain every candidate combination. The main models use both sizes separately, scale the four predictor metrics to zero mean and unit variance, and fit Tweedie generalised linear models with a log link.
+
+## Reproducibility notes
+
+Empirical parallel fitting uses seed 1610. Bootstrap resampling uses seed 1610; parallel bootstrap model fitting uses 16010; balancing discarded bootstrap fits uses 1610. Numerical integration in the module analysis has no local seed assignment. Numerical outputs may vary with the random state, package versions and parallel configuration.
+
+The model-fitting scripts use `Cover` as stored in the input table. The separate `fig-data-availability.R` script matches records across the three surveys and calculates `(Cover_later + 1) / (Cover_earlier + 1)` for its plots.
+
+## Study and sampling design
+
+The data come from a species-rich calcareous grassland in the Zone Atelier Plaine et Val de Sèvre, central-western France. The experiment ran from June 2012 to May 2014. Plant observations in the supplied modelling table represent June 2012, May 2013 and May 2014.
+
+The experiment comprised five blocks and 14 grasshopper treatments per block, giving 70 cages. Treatments comprised a grasshopper-free control, six single-species treatments, six three-species mixtures and one six-species mixture. In treatments containing grasshoppers, the target total density was 24 individuals per square metre; the control contained none. Nine 10 × 10 cm quadrats were sampled within each cage. Grasshoppers were introduced during summer, monitored and replaced to maintain treatment densities, and removed in September.
+
+Grasshopper diversity and composition were manipulated. Plant diversity and composition were not manipulated: plant cover varied naturally among sampling locations and dates. A cage is identified by `block` together with `treatment`; a quadrat is identified by those two fields together with `datapoint`. Multiple focal-species rows can belong to the same quadrat and date and are not independent experimental cages.
+
+## Data files and variable dictionary
+
+Both files are tab-delimited plain-text tables despite their `.txt` extension. The first line contains column names; character values and headers are double-quoted. Decimal values use a full stop. The supplied files contain no explicit missing values, blank cells or `NA` entries. Zeros are stored numeric values, not missing-value codes. Do not infer that an omitted record is a measured zero.
+
+### `empirical-dataset.txt`
+
+**Dimensions:** 12,254 data rows × 52 columns, excluding the header. **Focal species:** 36.
+
+This is the input table read by the modelling scripts. A row identifies one focal plant species at a particular date, block, treatment and quadrat. The combined key `time`, `block`, `treatment`, `datapoint`, `Focal` is unique in this file. The table contains 1,887 distinct combinations of date/block/treatment/quadrat; its 12,254 rows must not be interpreted as 12,254 separate sampling locations.
+
+| Column(s) | Type | Meaning and stored values |
+|---|---|---|
+| `time` | Integer code | Survey code: `1` = June 2012, `3` = May 2013, `6` = May 2014. These are survey identifiers, not equally spaced years or elapsed months. |
+| `date` | Text | Survey label: `Jun12`, `May13`, `May14`, respectively. |
+| `block` | Integer | Experimental block, `1`–`5`. |
+| `treatment` | Text | Assigned grasshopper composition; see treatment dictionary below. |
+| `datapoint` | Integer | Quadrat identifier within a cage, `1`–`9`. Not unique across cages or dates. |
+| `Focal` | Text | Code of the focal plant species. Values match the 36 plant predictor column names listed below. |
+| `Cover` | Numeric | Focal plant cover, described as percentage cover in the source project documentation. Stored range: `1`–`100`. This is the response passed directly to `glinternet.cv()` by the supplied empirical and bootstrap fitting scripts; it is not a total community-cover column. |
+| `ACHMIL`–`VERPER` (columns 8–43) | Numeric | Species-specific neighbour-cover predictors. The names identify 36 plant taxa; see the plant dictionary below. Stored values range from `0` to `500` across these columns. Values are reported as stored in the analysis input table. |
+| `legumes` | Numeric | Auxiliary field labelled legumes in the source table; stored range `0`–`30`. Excluded from the fitted predictor set in `code/02-lasso-parameters.R`. |
+| `grasses` | Numeric | Auxiliary field labelled grasses in the source table; stored range `0`–`20`. Excluded from the fitted predictor set. |
+| `other` | Numeric | Auxiliary field labelled other in the source table; stored range `0`–`35`. Excluded from the fitted predictor set. |
+| `Cb`, `Cd`, `Ci`, `Ee`, `Pg`, `Pp` (columns 47–52) | Numeric | Grasshopper treatment/exposure covariates, stored as `0`, `4`, `8` or `24`. See the grasshopper and treatment dictionaries below. |
+
+Survey coverage in this file:
+
+| `time` | `date` | Focal-species rows | Represented date/block/treatment/quadrat combinations |
+|---|---|---:|---:|
+| 1 | Jun12 | 3,577 | 629 |
+| 3 | May13 | 4,785 | 630 |
+| 6 | May14 | 3,892 | 628 |
+
+**Important handling details.** All rows have positive focal `Cover`; absent focal species are not represented by explicit zero-cover rows. The predictor columns are focal-specific, rather than identical community-cover vectors repeated for each focal species. In the supplied table, adding focal `Cover` back to the predictor column named by `Focal` produces the same predictor vector across focal-species rows sharing a date/block/treatment/quadrat. Do not add or subtract focal cover again when running the supplied scripts.
+
+Neighbour-cover values are documented as stored covariates. The input files do not specify the spatial aggregation used to construct them or the auxiliary fields `legumes`, `grasses` and `other`.
+
+### Plant species dictionary
+
+These mappings reproduce the code-to-name order used in `code/01-setup.R` and `suppl-mat/suppl-code/table-species-models-info.R`. Names and codes are preserved as used in the project, including identifications to genus.
+
+| Data code | Plant taxon used in the project | Figure abbreviation |
+|---|---|---|
+| `ACHMIL` | *Achillea millefolium* | `Am` |
+| `ANTODO` | *Anthoxanthum odoratum* | `Ao` |
+| `ARRELA` | *Arrhenatherum elatius* | `Ae` |
+| `BROERE` | *Bromus erectus* | `Be` |
+| `CENJAC` | *Centaurea jacea* | `Cj` |
+| `CONARV` | *Convolvulus arvensis* | `Ca` |
+| `CREPIS` | *Crepis* sp. | `Cr` |
+| `DACGLO` | *Dactylis glomerata* | `Dg` |
+| `DAUCAR` | *Daucus carota* | `Dc` |
+| `ELYREP` | *Elytrigia repens* | `Er` |
+| `ERYNGE` | *Eryngium* sp. | `En` |
+| `FESARU` | *Festuca arundinacea* | `Fa` |
+| `FESRUB` | *Festuca rubra* | `Fr` |
+| `GALVER` | *Galium verum* | `Gv` |
+| `GERDIS` | *Geranium dissectum* | `Gd` |
+| `GERROT` | *Geranium rotundifolium* | `Gr` |
+| `LEUVUL` | *Leucanthemum vulgare* | `Lv` |
+| `LOLPER` | *Lolium perenne* | `Lp` |
+| `LOTCOR` | *Lotus corniculatus* | `Lc` |
+| `MEDARA` | *Medicago arabica* | `Ma` |
+| `ONOREP` | *Ononis repens* | `Or` |
+| `PICECH` | *Picris echioides* | `Pe` |
+| `PICHIE` | *Picris hieracioides* | `Ph` |
+| `PLALAN` | *Plantago lanceolata* | `Pl` |
+| `POAANG` | *Poa angustifolia* | `Pa` |
+| `POAPRA` | *Poa pratensis* | `Pp` |
+| `POATRI` | *Poa trivialis* | `Pt` |
+| `RANACR` | *Ranunculus acris* | `Ra` |
+| `RUMACE` | *Rumex acetosa* | `Rx` |
+| `SALPRA` | *Salvia pratensis* | `Sp` |
+| `SONCHU` | *Sonchus asper* | `So` |
+| `TAROFF` | *Taraxacum officinale* | `To` |
+| `TRIFLA` | *Trifolium fragiferum* | `Tf` |
+| `TRIPRA` | *Trifolium pratense* | `Tp` |
+| `VERBOF` | *Verbena officinalis* | `Vo` |
+| `VERPER` | *Veronica persica* | `Vp` |
+
+`Pp` in this plant-figure abbreviation list means *Poa pratensis*. The grasshopper data column `Pp` means *Pseudochorthippus parallelus*; the actual plant predictor column is `POAPRA`.
+
+### Grasshopper species dictionary
+
+| Data code | Species name used in the manuscript |
+|---|---|
+| `Cb` | *Gomphocerippus biguttulus* |
+| `Cd` | *Chorthippus dorsatus* |
+| `Ci` | *Calliptamus italicus* |
+| `Ee` | *Euchorthippus elegantulus* |
+| `Pg` | *Pezotettix giornae* |
+| `Pp` | *Pseudochorthippus parallelus* |
+
+The legacy column name `Cb` is retained in the data and code. The network figure labels this grasshopper `Gb`; it is the same species, not an additional treatment.
+
+### Treatment dictionary
+
+| Treatment code | Assigned composition |
+|---|---|
+| `control` | No grasshoppers |
+| `Cb`, `Cd`, `Ci`, `Ee`, `Pg`, `Pp` | The single grasshopper species identified by that code |
+| `Cb.Cd.Pg` | Cb + Cd + Pg |
+| `Cb.Ci.Pg` | Cb + Ci + Pg |
+| `Cd.Pp.Ee` | Cd + Pp + Ee |
+| `Ci.Ee.Pg` | Ci + Ee + Pg |
+| `Ci.Pp.Ee` | Ci + Pp + Ee |
+| `Ci.Pp.Pg` | Ci + Pp + Pg |
+| `6sp` | All six grasshopper species |
+
+For `May13` and `May14`, the grasshopper covariates equal 24 for the species in a single-species treatment, 8 for each species in a three-species mixture and 4 for each species in the six-species mixture; species not assigned to the treatment equal zero. All control values are zero. For `Jun12`, all six covariates are zero, including rows with non-control treatment labels, consistent with the pre-introduction survey. Later values encode the herbivore treatment associated with the plant observation, rather than a census of live grasshoppers in May.
+
+### `full-plant-community-cover.txt`
+
+**Dimensions:** 11,915 data rows × 2 columns. **Distinct `Spcode` values:** 61.
+
+| Column | Type | Meaning and stored values |
+|---|---|---|
+| `Spcode` | Text | Plant taxon code for a cover record. Includes the 36 modelled plant codes and 25 additional codes listed below. |
+| `Cover` | Numeric | Plant-cover value for that record, described as percentage cover in the source project documentation. Stored range: `0`–`90`. |
+
+This is a long-format cover table used by `suppl-mat/suppl-code/table-species-models-info.R` to calculate species' shares of total recorded cover and the number of records per taxon. The 36 modelled codes account for approximately 98.63% of the summed `Cover` in this file. Record counts describe entries in this table, not the number of experimental cages.
+
+The file contains no date, block, cage, quadrat or individual identifier. Repeated `Spcode`/`Cover` pairs should not be removed as duplicates merely because those two fields match. There is no supported row-by-row join from this file to `empirical-dataset.txt`, and matching names of the `Cover` columns do not establish identical aggregation scales.
+
+The additional 25 codes present only in this file are listed below. The analysis scripts do not provide scientific-name mappings for these codes.
+
+`AGREUP`, `BROMOL`, `BROSTE`, `CARCAR`, `CRULAE`, `FALVUL`, `FRAEXE`, `GALAPA`, `GALMOL`, `HIMHIR`, `MALSYL`, `MYORAM`, `ORCHID`, `PLAMAJ`, `POAPOI`, `POASPP`, `POTREP`, `PRIVUL`, `PRUVUL`, `RANREP`, `RUBFRU`, `SENJAC`, `TRICAM`, `TRIREP`, `VICSAT`.
+
+
+# Thank you for getting this far
+
+Please cite the associated article and the repository record when reusing these materials. Repository landing pages provide the citation details and version identifiers.
+
+Project contact: **Rodrigo R. Granjel**, `granjel@gmail.com`.
