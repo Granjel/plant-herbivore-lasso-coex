@@ -357,12 +357,35 @@ For `May13` and `May14`, the grasshopper covariates equal 24 for the species in 
 
 This is a long-format cover table used by `suppl-mat/suppl-code/table-species-models-info.R` to calculate species' shares of total recorded cover and the number of records per taxon. The 36 modelled codes account for approximately 98.63% of the summed `Cover` in this file. Record counts describe entries in this table, not the number of experimental cages.
 
-The file contains no date, block, cage, quadrat or individual identifier. Repeated `Spcode`/`Cover` pairs should not be removed as duplicates merely because those two fields match. There is no supported row-by-row join from this file to `empirical-dataset.txt`, and matching names of the `Cover` columns do not establish identical aggregation scales.
+The additional 25 codes present only in this file are listed below, together with their scientific names:
 
-The additional 25 codes present only in this file are listed below. The analysis scripts do not provide scientific-name mappings for these codes.
-
-`AGREUP`, `BROMOL`, `BROSTE`, `CARCAR`, `CRULAE`, `FALVUL`, `FRAEXE`, `GALAPA`, `GALMOL`, `HIMHIR`, `MALSYL`, `MYORAM`, `ORCHID`, `PLAMAJ`, `POAPOI`, `POASPP`, `POTREP`, `PRIVUL`, `PRUVUL`, `RANREP`, `RUBFRU`, `SENJAC`, `TRICAM`, `TRIREP`, `VICSAT`.
-
+| Code | Scientific name |
+|---|---|
+| `AGREUP` | *Agrimonia eupatoria* |
+| `BROMOL` | *Bromus mollis* |
+| `BROSTE` | *Bromus sterilis* |
+| `CARCAR` | *Carpinus caroliniana* |
+| `CRULAE` | *Cruciata laevipes* |
+| `FALVUL` | *Falcaria vulgaris* |
+| `FRAEXE` | *Fraxinus excelsior* |
+| `GALAPA` | *Galium aparine* |
+| `GALMOL` | *Galium mollugo* |
+| `HIMHIR` | *Himantoglossum hircinum* |
+| `MALSYL` | *Malva sylvatica* |
+| `MYORAM` | *Myosotis ramosissima* |
+| `ORCHID` | *Orchidaceae* sp. |
+| `PLAMAJ` | *Plantago major* |
+| `POAPOI` | *Poa* sp. |
+| `POASPP` | *Poa* spp. |
+| `POTREP` | *Potentilla repens* |
+| `PRIVUL` | *Primula vulgaris* |
+| `PRUVUL` | *Prunella vulgaris* |
+| `RANREP` | *Ranunculus repens* |
+| `RUBFRU` | *Rubus fruticosus* |
+| `SENJAC` | *Senecio jacobaea* |
+| `TRICAM` | *Trifolium campestris* |
+| `TRIREP` | *Trifolium repens* |
+| `VICSAT` | *Vicia sativa* |
 
 # Thank you for getting this far
 
